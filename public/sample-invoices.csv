@@ -1,0 +1,11 @@
+invoiceNumber,vendorName,amount,issueDate,dueDate,category,description
+INV-001,Acme Hosting,1500.00,2025-01-15,2025-02-15,Infrastructure,Monthly hosting fee
+INV-002,CloudFlare CDN,299.99,2025-01-20,2025-02-20,Infrastructure,CDN and DDoS protection
+INV-003,Slack Technologies,1200.00,2025-01-01,2025-02-01,Communication,Team chat annual license
+INV-004,Acme Hosting,1500.00,2025-01-18,2025-02-18,Infrastructure,Monthly hosting fee
+INV-005,HubSpot Marketing,3500.00,2025-01-10,2025-02-10,Marketing,Marketing automation platform
+INV-006,AWS Cloud Services,8750.50,2025-02-01,2025-03-01,Infrastructure,Cloud compute and storage
+INV-007,Google Workspace,450.00,2025-02-05,2025-03-05,SaaS,Business email and docs
+INV-008,Adobe Creative,599.00,2025-02-10,2025-03-10,SaaS,Creative suite license
+INV-009,AWS Cloud Services,8750.50,2025-02-03,2025-03-03,Infrastructure,Cloud compute and storage
+INV-010,Datadog Monitoring,2100.00,2025-02-15,2025-03-15,DevOps,Infrastructure monitoring

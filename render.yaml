@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: invoiceguard
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: invoiceguard-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://invoiceguard.onrender.com
+
+databases:
+  - name: invoiceguard-db
+    plan: free
+    databaseName: invoiceguard

@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  plan      String   @default("free")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+  invoices  Invoice[]
+  alerts    AuditAlert[]
+}
+
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  passwordHash   String
+  name           String
+  role           String       @default("member")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  invoiceNumber   String
+  vendorName      String
+  vendorId        String?
+  amount          Float
+  currency        String        @default("USD")
+  issueDate       DateTime
+  dueDate         DateTime?
+  category        String?
+  status          String        @default("pending")
+  description     String?
+  organizationId  String
+  organization    Organization  @relation(fields: [organizationId], references: [id])
+  lineItems       LineItem[]
+  alerts          AuditAlert[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@index([vendorName])
+  @@index([invoiceNumber])
+  @@index([amount])
+}
+
+model LineItem {
+  id          String  @id @default(cuid())
+  description String
+  quantity    Float
+  unitPrice   Float
+  total       Float
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model AuditAlert {
+  id             String       @id @default(cuid())
+  type           String
+  severity       String
+  title          String
+  description    String
+  amountAtRisk   Float        @default(0)
+  status         String       @default("open")
+  invoiceId      String?
+  invoice        Invoice?     @relation(fields: [invoiceId], references: [id])
+  relatedInvoiceId String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  resolvedAt     DateTime?
+
+  @@index([organizationId])
+  @@index([type])
+  @@index([status])
+}
