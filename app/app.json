@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "VoxDrop",
+    "slug": "voxdrop",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "voxdrop",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0A0A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.voxdrop.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "VoxDrop needs microphone access to record voice notes."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0A0A0A"
+      },
+      "package": "com.voxdrop.app",
+      "permissions": ["RECORD_AUDIO"]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-av",
+        {
+          "microphonePermission": "VoxDrop needs microphone access to record voice notes."
+        }
+      ],
+      "@stripe/stripe-react-native"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id"
+      },
+      "supabaseUrl": "https://your-project.supabase.co",
+      "supabaseAnonKey": "your-anon-key",
+      "apiUrl": "https://your-backend.railway.app",
+      "stripePublishableKey": "pk_test_your-key"
+    }
+  }
+}
