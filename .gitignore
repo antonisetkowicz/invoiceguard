@@ -6,3 +6,13 @@ node_modules/
 out/
 dist/
 .claude-flow/
+
+# Python (trading_bot)
+__pycache__/
+*.pyc
+.coverage
+.pytest_cache/
+.mypy_cache/
+logs/
+reports/
+.cache/

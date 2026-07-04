@@ -1,0 +1,56 @@
+# =============================================================================
+# Konfiguracja gield. Klucze API TYLKO przez zmienne srodowiskowe:
+#   TRADINGBOT_EXCHANGES__BINANCE__API_KEY / __API_SECRET itd.
+# Nigdy nie commituj kluczy do repozytorium.
+# =============================================================================
+
+default_exchange: binance
+
+exchanges:
+  binance:
+    # Identyfikator klasy ccxt
+    ccxt_id: binance
+    # Rynek: spot | futures
+    market_type: spot
+    # Prowizje taker/maker
+    taker_fee: 0.001
+    maker_fee: 0.001
+    # Limity zapytan (requests na sekunde)
+    rate_limit_rps: 10
+    # Klucze wypelniane z env; puste = tylko dane publiczne
+    api_key: ""
+    api_secret: ""
+    # Testnet/sandbox
+    sandbox: true
+
+  binance_futures:
+    ccxt_id: binanceusdm
+    market_type: futures
+    taker_fee: 0.0004
+    maker_fee: 0.0002
+    rate_limit_rps: 10
+    api_key: ""
+    api_secret: ""
+    sandbox: true
+
+  bybit:
+    ccxt_id: bybit
+    market_type: spot
+    taker_fee: 0.001
+    maker_fee: 0.001
+    rate_limit_rps: 5
+    api_key: ""
+    api_secret: ""
+    sandbox: true
+
+  ibkr:
+    # IBKR nie jest w ccxt - wymaga ib_insync; connector rzuci
+    # NotImplementedError jesli pakiet nie jest zainstalowany.
+    ccxt_id: ibkr
+    market_type: stocks
+    taker_fee: 0.0005
+    maker_fee: 0.0005
+    rate_limit_rps: 2
+    api_key: ""
+    api_secret: ""
+    sandbox: true
