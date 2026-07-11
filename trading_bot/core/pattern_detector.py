@@ -12,13 +12,14 @@ from __future__ import annotations
 import pandas as pd
 from loguru import logger
 
-from trading_bot.core.config import PatternConfig
+from trading_bot.core.config import PatternConfig, Settings
 from trading_bot.core.models import Signal
 from trading_bot.strategies.base_strategy import BaseStrategy
 from trading_bot.strategies.candlestick_patterns import CandlestickStrategy
 from trading_bot.strategies.chart_patterns import ChartPatternStrategy
 from trading_bot.strategies.harmonic_patterns import HarmonicStrategy
 from trading_bot.strategies.microstructure import MicrostructureStrategy
+from trading_bot.strategies.xauusd_gold import XauusdStrategy
 
 
 class PatternDetector:
@@ -49,6 +50,21 @@ class PatternDetector:
                 ),
             ]
         )
+
+    @classmethod
+    def from_settings(cls, settings: Settings) -> "PatternDetector":
+        """Buduje detektor sterowany configiem.
+
+        Strategie dedykowane (np. xauusd) dolaczane sa tylko, gdy maja
+        wage w settings.strategy_weights - jeden config wlacza/wylacza
+        cala strategie bez zmian w kodzie.
+        """
+        detector = cls.default(settings.patterns)
+        if "xauusd" in settings.strategy_weights:
+            detector.strategies.append(
+                XauusdStrategy(min_confidence=settings.patterns.min_confidence)
+            )
+        return detector
 
     def detect_all(self, frames: dict[str, pd.DataFrame], symbol: str = "") -> list[Signal]:
         """Uruchamia kazda strategie na kazdym timeframe.

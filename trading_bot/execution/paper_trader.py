@@ -32,7 +32,7 @@ class PaperTrader:
 
     def __init__(self, settings: Settings, detector: Optional[PatternDetector] = None) -> None:
         self.settings = settings
-        self.detector = detector or PatternDetector.default(settings.patterns)
+        self.detector = detector or PatternDetector.from_settings(settings)
         self.risk = RiskManager(settings.risk)
         self.meta = MetaLearner(settings.strategy_weights or {"candlestick": 1.0})
         self.regime_detector = RegimeDetector(settings.regime)
@@ -92,11 +92,15 @@ class PaperTrader:
     # ------------------------------------------------------------------
     @staticmethod
     def _structure_stop(signals: list, direction: Direction) -> Optional[float]:
-        """Poziom SL z metadanych formacji (neckline / PRZ), jesli dostepny."""
+        """Poziom SL z metadanych formacji, jesli dostepny.
+
+        Zrodla: neckline (chart), PRZ (harmonic), structure_stop (xauusd -
+        range azjatycki / knot fakeoutu / poziom okragly).
+        """
         levels = [
-            s.meta.get("neckline") or s.meta.get("prz")
+            s.meta.get("structure_stop") or s.meta.get("neckline") or s.meta.get("prz")
             for s in signals
-            if s.meta.get("neckline") or s.meta.get("prz")
+            if s.meta.get("structure_stop") or s.meta.get("neckline") or s.meta.get("prz")
         ]
         if not levels:
             return None

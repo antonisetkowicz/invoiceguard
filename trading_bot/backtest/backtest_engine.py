@@ -66,7 +66,7 @@ class BacktestEngine:
         regime_refresh: int = 24,
     ) -> None:
         self.settings = settings
-        self.detector = detector or PatternDetector.default(settings.patterns)
+        self.detector = detector or PatternDetector.from_settings(settings)
         self.lookback = lookback
         self.higher_timeframes = higher_timeframes
         #: co ile swiec odswiezac klasyfikacje rezimu (rezim zmienia sie wolno)

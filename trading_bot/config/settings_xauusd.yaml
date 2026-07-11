@@ -1,0 +1,97 @@
+# =============================================================================
+# Preset konfiguracyjny XAUUSD (zloto spot, interwal egzekucji M15)
+# Uzycie: python -m trading_bot.main --mode backtest --symbol XAU/USD \
+#            --config trading_bot/config/settings_xauusd.yaml
+# Parametry rozniace sie od settings.yaml opisane inline.
+# =============================================================================
+
+mode: paper
+
+symbols:
+  - XAU/USD
+
+# M15 egzekucja; H1/H4 jako kontekst wyzszego rzedu dla konfluencji
+timeframes: ["15m", "1h", "4h"]
+
+data:
+  cache_dir: ".cache/ohlcv"
+  cache_ttl_minutes: 15
+  max_workers: 4
+  # ~3 miesiace M15 - wystarczy na okno detekcji + rozgrzewke rezimu
+  history_bars: 9000
+
+signals:
+  # Zloto generuje wiecej szumu intraday - progi wejscia podniesione,
+  # zeby wymagac silniejszej konfluencji niz na krypto 1h
+  long_threshold: 0.65
+  short_threshold: -0.65
+  hold_low: -0.2
+  hold_high: 0.2
+  timeframe_conflict_penalty: 0.5
+
+strategy_weights:
+  # strategia dedykowana dominuje; generyczne detektory jako potwierdzenie
+  xauusd: 1.4
+  chart: 1.0
+  harmonic: 1.0
+  candlestick: 0.7      # nizsza waga: tick volume oslabia komponent wolumenu
+  microstructure: 0.8
+
+regime_multipliers:
+  trending_up:    {trend_following: 1.2, mean_reversion: 0.8}
+  trending_down:  {trend_following: 1.2, mean_reversion: 0.8}
+  mean_reverting: {trend_following: 0.8, mean_reversion: 1.2}
+  high_volatility: {trend_following: 0.9, mean_reversion: 0.7}
+  low_volatility:  {trend_following: 1.0, mean_reversion: 1.1}
+
+risk:
+  initial_capital: 10000.0
+  kelly_fraction: 0.5
+  max_position_pct: 0.05
+  # Zloto lubi glebokie knoty - szerszy stop niz domyslne 2.0
+  atr_stop_multiplier: 2.5
+  rr_min: 2.0
+  trailing_activation_r: 1.0
+  max_daily_loss_pct: 0.03
+  max_correlated_positions: 3
+  correlation_threshold: 0.7
+  # Filtr zmiennosci ostrzejszy: nie handluj w trakcie NFP/CPI/FOMC
+  # (spike ATR to jedyny proxy newsow bez kalendarza makro)
+  atr_filter_multiple: 1.4
+  atr_filter_lookback: 100
+
+patterns:
+  fib_tolerance: 0.02
+  sr_min_touches: 3
+  # M15: krotsze okno pivotow, formacje zyja szybciej niz na 1h
+  pivot_window: 4
+  min_confidence: 0.35
+
+backtest:
+  train_months: 6
+  test_months: 2
+  validation_months: 1
+  # Koszty XAUUSD (CFD/spot u typowego brokera):
+  # spread ~0.25-0.35 USD przy cenie ~2600 -> ~0.012% na strone
+  slippage_market: 0.00012
+  slippage_limit: 0.00005
+  commission: 0.00007
+  monte_carlo_runs: 1000
+  report_dir: "reports"
+
+regime:
+  method: kmeans
+  n_regimes: 5
+  feature_window: 30
+
+logging:
+  level: INFO
+  rotation: "10 MB"
+  retention: "14 days"
+  file: "logs/bot_xauusd.log"
+
+alerts:
+  telegram_enabled: false
+  telegram_token: ""
+  telegram_chat_id: ""
+  discord_webhook: ""

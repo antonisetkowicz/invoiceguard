@@ -64,6 +64,10 @@ python -m trading_bot.main --mode backtest --symbol BTC/USDT
 # Paper trading (domyślny tryb):
 python -m trading_bot.main --mode paper --synthetic
 
+# XAUUSD (złoto, M15) — dedykowany preset (strategia sesyjna + koszty CFD):
+python -m trading_bot.main --mode backtest --symbol XAU/USD \
+    --config trading_bot/config/settings_xauusd.yaml
+
 # Testy:
 pytest trading_bot/tests --cov=trading_bot
 ```
@@ -94,6 +98,7 @@ Klucze API podawaj **wyłącznie** przez zmienne środowiskowe
 | `harmonic_patterns` | Gartley (0.618 B / 0.786 D), Bat (0.382–0.500 / 0.886), Butterfly (0.786 / 1.272–1.618), Crab (0.382–0.618 / 1.618), AB=CD — tolerancja Fibo ±2%, walidacja proporcji czasowej fal, confidence z wolumenu i dywergencji RSI |
 | `chart_patterns` | Head & Shoulders + inverse, trójkąty (symetryczny/rosnący/malejący), flaga/proporzec, prostokąt, Double Top/Bottom — sygnał dopiero po przebiciu poziomu aktywacji |
 | `microstructure` | VWAP deviation (z-score), order flow imbalance (aproksymacja z OHLCV), liquidity void, S/R z walidacją min. 3 dotknięć |
+| `xauusd_gold` | Strategia dedykowana XAUUSD: breakout rangu azjatyckiego (SL pod rangiem), londyński fakeout (stop-hunt reversal), odrzucenie poziomów psychologicznych co 25 USD, fade od sesyjnego VWAP; sygnały ważone płynnością sesji (nakładka LDN/NY 1.0× → Azja 0.5×); wolumen tick tylko jako bonus, nigdy wymóg |
 
 ## Silnik konfluencji
 

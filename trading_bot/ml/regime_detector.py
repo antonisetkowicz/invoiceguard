@@ -106,11 +106,13 @@ class RegimeDetector:
     # ------------------------------------------------------------ strategie
     #: strategie rekomendowane per rezim (uzywane przez main do filtracji)
     REGIME_STRATEGIES: dict[Regime, tuple[str, ...]] = {
-        Regime.TRENDING_UP: ("chart", "candlestick"),
-        Regime.TRENDING_DOWN: ("chart", "candlestick"),
-        Regime.MEAN_REVERTING: ("harmonic", "microstructure", "candlestick"),
-        Regime.HIGH_VOLATILITY: ("microstructure",),
-        Regime.LOW_VOLATILITY: ("harmonic", "chart", "microstructure"),
+        # "xauusd" wszedzie: strategia sama adaptuje sie do rezimu przez
+        # style sub-sygnalow (breakout=trend, fade/fakeout=mean-reversion)
+        Regime.TRENDING_UP: ("chart", "candlestick", "xauusd"),
+        Regime.TRENDING_DOWN: ("chart", "candlestick", "xauusd"),
+        Regime.MEAN_REVERTING: ("harmonic", "microstructure", "candlestick", "xauusd"),
+        Regime.HIGH_VOLATILITY: ("microstructure", "xauusd"),
+        Regime.LOW_VOLATILITY: ("harmonic", "chart", "microstructure", "xauusd"),
     }
 
     def active_strategies(self, regime: Regime) -> tuple[str, ...]:

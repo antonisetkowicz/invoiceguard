@@ -69,7 +69,10 @@ class BaseStrategy(abc.ABC):
         timeframe: str,
         bar_index: int,
         meta: Optional[dict] = None,
+        style: Optional[StrategyStyle] = None,
     ) -> Signal:
+        """Fabryka sygnalow; `style` pozwala nadpisac styl per sygnal
+        (strategie hybrydowe, np. breakout + fade w jednej klasie)."""
         return Signal(
             strategy=self.name,
             pattern=pattern,
@@ -77,7 +80,7 @@ class BaseStrategy(abc.ABC):
             confidence=max(0.0, min(1.0, confidence)),
             timeframe=timeframe,
             symbol=symbol,
-            style=self.style,
+            style=style or self.style,
             bar_index=bar_index,
             meta=meta or {},
         )
