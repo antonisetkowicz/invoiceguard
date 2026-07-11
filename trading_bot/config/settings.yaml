@@ -1,0 +1,123 @@
+# =============================================================================
+# Trading Bot - glowna konfiguracja
+# Kazdy parametr opisany inline. Wartosci nadpisywalne przez zmienne
+# srodowiskowe o prefiksie TRADINGBOT_ (np. TRADINGBOT_MODE=live).
+# =============================================================================
+
+# Tryb pracy: "paper" (symulacja, domyslny) | "live" (realne zlecenia,
+# kazda transakcja wymaga potwierdzenia) | "backtest"
+mode: paper
+
+# Symbole do handlu (format ccxt)
+symbols:
+  - BTC/USDT
+  - ETH/USDT
+
+# Timeframe'y analizowane rownolegle; pierwszy = timeframe egzekucji
+timeframes: ["1h", "4h", "1d"]
+
+data:
+  # Katalog cache Parquet dla danych OHLCV
+  cache_dir: ".cache/ohlcv"
+  # Maksymalny wiek cache w minutach zanim dane zostana odswiezone
+  cache_ttl_minutes: 30
+  # Liczba watkow do rownoleglego pobierania danych
+  max_workers: 4
+  # Ile swiec pobierac wstecz przy zimnym starcie
+  history_bars: 5000
+
+signals:
+  # Prog wejscia LONG: finalny score > long_threshold
+  long_threshold: 0.6
+  # Prog wejscia SHORT: finalny score < short_threshold
+  short_threshold: -0.6
+  # Strefa neutralna [hold_low, hold_high] -> HOLD
+  hold_low: -0.2
+  hold_high: 0.2
+  # Kara mnoznikowa za sprzeczne sygnaly miedzy timeframe'ami (0-1)
+  timeframe_conflict_penalty: 0.5
+
+# Wagi bazowe strategii (mnozone przez rezim i confidence w agregatorze)
+strategy_weights:
+  candlestick: 1.0
+  harmonic: 1.2
+  chart: 1.1
+  microstructure: 0.9
+
+# Mnozniki wag per rezim rynku: strategia trend-following zyskuje w trendzie,
+# mean-reversion w konsolidacji.
+regime_multipliers:
+  trending_up:    {trend_following: 1.2, mean_reversion: 0.8}
+  trending_down:  {trend_following: 1.2, mean_reversion: 0.8}
+  mean_reverting: {trend_following: 0.8, mean_reversion: 1.2}
+  high_volatility: {trend_following: 0.9, mean_reversion: 0.7}
+  low_volatility:  {trend_following: 1.0, mean_reversion: 1.1}
+
+risk:
+  # Kapital startowy (quote currency)
+  initial_capital: 10000.0
+  # Ulamek Kelly'ego (0.5 = pol-Kelly) uzywany do sizingu
+  kelly_fraction: 0.5
+  # Twardy limit wielkosci pozycji jako ulamek kapitalu
+  max_position_pct: 0.05
+  # Mnoznik ATR14 dla stop-lossa
+  atr_stop_multiplier: 2.0
+  # Minimalny stosunek zysku do ryzyka (TP = rr_min * ryzyko)
+  rr_min: 2.0
+  # Po osiagnieciu ilu R aktywowac trailing stop
+  trailing_activation_r: 1.0
+  # Dzienna maksymalna strata (ulamek kapitalu); po przekroczeniu bot
+  # wstrzymuje handel do nastepnego dnia UTC
+  max_daily_loss_pct: 0.03
+  # Maksymalna liczba otwartych pozycji o korelacji > correlation_threshold
+  max_correlated_positions: 3
+  correlation_threshold: 0.7
+  # Filtr zmiennosci: nie otwieraj pozycji gdy ATR > atr_filter_multiple
+  # sredniej ATR z atr_filter_lookback swiec
+  atr_filter_multiple: 1.5
+  atr_filter_lookback: 100
+
+patterns:
+  # Tolerancja poziomow Fibonacciego dla formacji harmonicznych (+-2%)
+  fib_tolerance: 0.02
+  # Minimalna liczba dotkniec do walidacji S/R
+  sr_min_touches: 3
+  # Szerokosc okna detekcji pivotow (swing high/low)
+  pivot_window: 5
+  # Minimalny confidence score, ponizej ktorego sygnal jest odrzucany
+  min_confidence: 0.3
+
+backtest:
+  # Okna walk-forward (miesiace)
+  train_months: 6
+  test_months: 2
+  validation_months: 1
+  # Slippage: market 0.05%, limit 0.02%
+  slippage_market: 0.0005
+  slippage_limit: 0.0002
+  # Prowizja per exchange (nadpisywana przez exchanges.yaml)
+  commission: 0.001
+  # Liczba permutacji Monte Carlo
+  monte_carlo_runs: 1000
+  # Katalog na raporty HTML
+  report_dir: "reports"
+
+regime:
+  # Metoda klasyfikacji: "kmeans" | "hmm"
+  method: kmeans
+  n_regimes: 5
+  # Okno cech (swiece) do klasyfikacji rezimu
+  feature_window: 30
+
+logging:
+  level: INFO
+  # Rotacja pliku logu
+  rotation: "10 MB"
+  retention: "14 days"
+  file: "logs/bot.log"
+
+alerts:
+  telegram_enabled: false
+  telegram_token: ""        # token bota Telegram (uzyj env TRADINGBOT_ALERTS__TELEGRAM_TOKEN)
+  telegram_chat_id: ""
+  discord_webhook: ""
