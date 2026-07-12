@@ -132,6 +132,26 @@ uvicorn app.main:app --reload
 
 Dokumentacja OpenAPI dostępna jest pod `http://localhost:8000/docs`.
 
+### Dane demo (`backend/scripts/seed_demo_data.py`)
+
+Wypełnia tabelę `leads` sześcioma realistycznymi leadami z różnych branż
+(e-commerce, usługi B2B, SaaS, nieruchomości), o zróżnicowanym poziomie
+"gorącości" — przydatne, żeby mieć gotowe dane do pokazania na callu nawet
+bez wypełniania formularza na żywo.
+
+```bash
+cd backend
+python scripts/seed_demo_data.py           # czyści tabelę i seeduje na nowo
+python scripts/seed_demo_data.py --keep    # nie czyści tabeli, dopisuje leady
+python scripts/seed_demo_data.py --no-ai   # pomija Claude API, używa gotowych wyników
+```
+
+Domyślnie każdy lead jest kwalifikowany przez prawdziwe Claude API (ten sam
+kod co `POST /webhook/lead`), więc `qualified_score` wypada naturalnie
+zróżnicowanie. Jeśli `ANTHROPIC_API_KEY` nie jest ustawiony albo wywołanie się
+nie powiedzie, skrypt automatycznie używa przygotowanych wcześniej wartości
+fallback — dane demo są więc zawsze gotowe, nawet offline.
+
 ## Dashboard React (`frontend/`)
 
 Dashboard do pokazywania na callach sprzedażowych — ciemny motyw, gradientowe
