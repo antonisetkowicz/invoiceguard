@@ -1,0 +1,5 @@
+bin/
+obj/
+cAlgo/
+*.algo
+*.algo.metadata

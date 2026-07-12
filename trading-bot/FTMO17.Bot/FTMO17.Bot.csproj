@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>FTMO17Bot</AssemblyName>
+    <!-- don't copy the .algo into a local cAlgo/Sources folder on build -->
+    <AlgoPublish>false</AlgoPublish>
+  </PropertyGroup>
+
+  <!-- The cTrader SDK names the .algo after the project's PARENT directory;
+       give it a proper name instead. -->
+  <Target Name="_FixAlgoName" BeforeTargets="_ExtractMetadata">
+    <PropertyGroup>
+      <_AlgoFileName>FTMO17Bot.algo</_AlgoFileName>
+      <_AlgoFilePath>$(OutDir)$(_AlgoFileName)</_AlgoFilePath>
+      <_AlgoMetadataFileName>$(_AlgoFileName).metadata</_AlgoMetadataFileName>
+      <_AlgoMetadataFilePath>$(OutDir)$(_AlgoMetadataFileName)</_AlgoMetadataFilePath>
+    </PropertyGroup>
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="cTrader.Automate" Version="1.*" />
+  </ItemGroup>
+
+  <!-- Core sources are compiled INTO the bot assembly (not a project
+       reference) so the .algo package is fully self-contained and the
+       exact same engine code runs in the bot and the backtest harness. -->
+  <ItemGroup>
+    <Compile Include="../FTMO17.Core/**/*.cs" Exclude="../FTMO17.Core/obj/**;../FTMO17.Core/bin/**" LinkBase="Core" />
+  </ItemGroup>
+
+</Project>
