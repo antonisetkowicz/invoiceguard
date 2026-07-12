@@ -3,3 +3,7 @@ obj/
 cAlgo/
 *.algo
 *.algo.metadata
+# the repo root ignores dist/ (Next.js); re-include our compiled bot package
+!dist/
+dist/*
+!dist/*.algo
