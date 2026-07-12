@@ -11,10 +11,12 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "ctrader:fetch-backtest-data": "tsx scripts/ctrader-fetch-backtest-data.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
+    "@reiryoku/ctrader-layer": "^2.2.0",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^22.15.0",
     "@types/react": "^19.1.0",
