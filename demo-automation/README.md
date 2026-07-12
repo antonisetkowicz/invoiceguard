@@ -26,6 +26,11 @@ przed wysyłką prosi o zatwierdzenie na Telegramie), oraz dashboard
       App.tsx, components/, hooks/, lib/api.ts
     /package.json
     /.env.example
+  /case-studies
+    generate_case_study.py
+    requirements.txt
+    /fonts
+    /examples
   /n8n-workflow.json
   /README.md
 ```
@@ -155,6 +160,23 @@ Funkcje:
   panelem z odpowiedzią AI.
 - Licznik metryk u góry: liczba leadów przetworzonych dzisiaj, liczba "hot"
   leadów oraz średni czas odpowiedzi (metryka symulowana na potrzeby demo).
+
+## Generator case studies PDF (`case-studies/`)
+
+Skrypt `generate_case_study.py` (reportlab) generuje 1-stronicowe case study
+PDF na podstawie prostego JSON brief-u — nagłówek z nazwą projektu, sekcja
+"Problem" (czerwony akcent), "Rozwiązanie" (niebieski akcent), numerowane
+"Efekty" oraz stopka z tech stackiem jako tagi. Szczegóły i przykłady w
+[`case-studies/README.md`](case-studies/README.md).
+
+```bash
+cd case-studies
+pip install -r requirements.txt
+python generate_case_study.py examples/*.json -o .
+```
+
+Gotowe PDF-y wygenerowane z przykładowych projektów (Boss Agency, ofertuj.pro,
+DocFlow AI) są dołączone bezpośrednio w `case-studies/`.
 
 ## Workflow n8n (`n8n-workflow.json`)
 

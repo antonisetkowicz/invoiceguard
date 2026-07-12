@@ -1,0 +1,11 @@
+{
+  "project_name": "ofertuj.pro",
+  "problem": "Przygotowanie spersonalizowanej oferty handlowej B2B zajmowało handlowcom 2-3 godziny, a niespójne szablony i wolny czas reakcji obniżały skuteczność sprzedaży i wiarygodność marki.",
+  "solution": "AI generator ofert B2B: na podstawie krótkiego briefu i cennika klienta model językowy generuje gotową, spersonalizowaną ofertę PDF w firmowym brandingu, z automatycznym dopasowaniem oferty do branży i potrzeb odbiorcy.",
+  "results": [
+    "Czas przygotowania oferty skrócony z 2-3h do 5 minut",
+    "35% wzrost współczynnika konwersji wysłanych ofert",
+    "Spójny branding i ton komunikacji we wszystkich ofertach zespołu"
+  ],
+  "tech_stack": ["Next.js", "Claude API", "PostgreSQL", "Stripe", "WeasyPrint"]
+}
