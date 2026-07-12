@@ -1,0 +1,11 @@
+{
+  "project_name": "DocFlow AI",
+  "problem": "Firmy obsługujące wielu klientów ręcznie przepisywały dane z faktur, umów i formularzy do swoich systemów, co generowało błędy i wąskie gardło przy rosnącym wolumenie dokumentów.",
+  "solution": "Multi-tenant platforma document intelligence: OCR + AI ekstrakcja danych z dokumentów, automatyczna klasyfikacja i walidacja, z pełną izolacją danych między klientami (tenantami) i integracją przez API.",
+  "results": [
+    "90% redukcja czasu ręcznego wprowadzania danych",
+    "99,2% skuteczności automatycznej ekstrakcji kluczowych pól",
+    "Skalowanie do ponad 50 tenantów bez wzrostu kosztów obsługi"
+  ],
+  "tech_stack": ["FastAPI", "Claude API", "PostgreSQL (multi-tenant)", "Tesseract OCR", "AWS S3"]
+}

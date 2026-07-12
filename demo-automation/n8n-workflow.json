@@ -1,0 +1,284 @@
+{
+  "name": "Lead Qualification Demo",
+  "nodes": [
+    {
+      "id": "sticky-overview",
+      "name": "Sticky Note - Przegląd",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [200, 40],
+      "parameters": {
+        "width": 1420,
+        "height": 120,
+        "color": 4,
+        "content": "## Lead Qualification Demo\nWorkflow demonstracyjny: webhook przyjmuje nowego leada, backend FastAPI + Claude API ocenia jego jakość i generuje spersonalizowaną odpowiedź, a n8n decyduje czy wysłać powiadomienie na Telegram (hot lead) czy oznaczyć lead jako niski priorytet."
+      }
+    },
+    {
+      "id": "sticky-webhook",
+      "name": "Sticky Note - Webhook",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [200, 480],
+      "parameters": {
+        "width": 260,
+        "height": 240,
+        "color": 5,
+        "content": "### 1. Webhook Trigger\nOdbiera dane nowego leada (name, email, company, message) pod adresem **POST /lead-intake**. To punkt wejścia całego demo - tu \"wpada\" lead np. z formularza kontaktowego na stronie."
+      }
+    },
+    {
+      "id": "sticky-http-qualify",
+      "name": "Sticky Note - Kwalifikacja AI",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [480, 480],
+      "parameters": {
+        "width": 260,
+        "height": 240,
+        "color": 5,
+        "content": "### 2. HTTP Request → FastAPI\nPrzekazuje dane leada do naszego backendu FastAPI (**POST /webhook/lead**). Backend zapisuje leada w PostgreSQL i wywołuje Claude API, które ocenia jakość leada (qualified_score 0-100) oraz generuje spersonalizowaną odpowiedź email."
+      }
+    },
+    {
+      "id": "sticky-if",
+      "name": "Sticky Note - IF Hot Lead",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [740, 480],
+      "parameters": {
+        "width": 260,
+        "height": 240,
+        "color": 5,
+        "content": "### 3. IF - Czy to Hot Lead?\nSprawdza, czy `qualified_score` jest większy niż 60. TRUE → gałąź z powiadomieniem (gorący lead, wymaga szybkiej reakcji handlowca). FALSE → gałąź z niskim priorytetem."
+      }
+    },
+    {
+      "id": "sticky-telegram",
+      "name": "Sticky Note - Telegram",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1000, 20],
+      "parameters": {
+        "width": 260,
+        "height": 220,
+        "color": 3,
+        "content": "### 4a. TRUE - Powiadomienie Telegram\nDla gorących leadów wysyłamy powiadomienie na Telegram z podsumowaniem leada i przyciskami \"Zatwierdź\" / \"Edytuj\" - human-in-the-loop, zanim odpowiedź AI faktycznie trafi do klienta."
+      }
+    },
+    {
+      "id": "sticky-set",
+      "name": "Sticky Note - Low Priority",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1000, 500],
+      "parameters": {
+        "width": 260,
+        "height": 220,
+        "color": 3,
+        "content": "### 4b. FALSE - Low Priority\nDla leadów o niskiej jakości nie wysyłamy żadnego powiadomienia - workflow tylko oznacza status jako \"low priority\", żeby handlowiec mógł wrócić do tematu później."
+      }
+    },
+    {
+      "id": "sticky-respond",
+      "name": "Sticky Note - Respond",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1280, 480],
+      "parameters": {
+        "width": 260,
+        "height": 240,
+        "color": 5,
+        "content": "### 5. Respond to Webhook\nZwraca odpowiedź do systemu, który wywołał webhook (np. formularza na stronie) - potwierdzenie przyjęcia leada wraz z wygenerowaną przez AI odpowiedzią i wynikiem kwalifikacji."
+      }
+    },
+    {
+      "id": "webhook-trigger",
+      "name": "Webhook - Nowy Lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "lead-intake",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "http-qualify",
+      "name": "HTTP Request - Kwalifikacja AI (FastAPI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/webhook/lead",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "if-hot-lead",
+      "name": "IF - Czy Hot Lead? (score > 60)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [760, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "cond-score-gt-60",
+              "leftValue": "={{ $json.qualified_score }}",
+              "rightValue": 60,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "http-telegram",
+      "name": "HTTP Request - Powiadomienie Telegram (Hot Lead)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1020, 160],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/webhook/telegram-approval",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ lead_id: $json.lead.id }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "set-low-priority",
+      "name": "Set - Low Priority (brak powiadomienia)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1020, 460],
+      "parameters": {
+        "mode": "manual",
+        "includeOtherFields": true,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-priority",
+              "name": "priority",
+              "type": "string",
+              "value": "low priority"
+            },
+            {
+              "id": "assign-notified",
+              "name": "notified",
+              "type": "boolean",
+              "value": false
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "respond-webhook",
+      "name": "Respond to Webhook - Potwierdzenie",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1300, 300],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: \"ok\", qualified_score: $json.qualified_score, ai_response: $json.ai_response, priority: $json.priority }) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Nowy Lead": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Kwalifikacja AI (FastAPI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Kwalifikacja AI (FastAPI)": {
+      "main": [
+        [
+          {
+            "node": "IF - Czy Hot Lead? (score > 60)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Czy Hot Lead? (score > 60)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request - Powiadomienie Telegram (Hot Lead)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set - Low Priority (brak powiadomienia)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request - Powiadomienie Telegram (Hot Lead)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Potwierdzenie",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Low Priority (brak powiadomienia)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - Potwierdzenie",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b6f0a1c2-1e4a-4f7a-9c3b-3a2f9d1e5c70",
+  "meta": {
+    "instanceId": "lead-qualification-demo"
+  },
+  "id": "lead-qualification-demo",
+  "tags": []
+}

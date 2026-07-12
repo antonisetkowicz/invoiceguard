@@ -1,0 +1,11 @@
+{
+  "project_name": "Boss Agency",
+  "problem": "Ręczne wyszukiwanie i kwalifikacja leadów B2B zajmowało zespołowi 15h tygodniowo, a część gorących leadów trafiała do handlowców z opóźnieniem nawet kilku dni.",
+  "solution": "Multi-agent pipeline: Apollo.io scraping -> AI qualification (Claude API) -> automated outreach -> Telegram approval. Cały proces uruchamiany i orkiestrowany w n8n, z bazą leadów w PostgreSQL.",
+  "results": [
+    "80% redukcja czasu na kwalifikację leadów",
+    "3x więcej leadów przetwarzanych miesięcznie",
+    "Human-in-the-loop zachowujący pełną kontrolę nad wysyłką"
+  ],
+  "tech_stack": ["n8n", "Claude API", "PostgreSQL", "Apollo.io", "Telegram Bot API"]
+}
