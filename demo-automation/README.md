@@ -20,6 +20,7 @@ wysyłką prosi o zatwierdzenie na Telegramie (human-in-the-loop).
     /requirements.txt
     /.env.example
     /Dockerfile
+  /n8n-workflow.json
   /README.md
 ```
 
@@ -119,6 +120,34 @@ uvicorn app.main:app --reload
 ```
 
 Dokumentacja OpenAPI dostępna jest pod `http://localhost:8000/docs`.
+
+## Workflow n8n (`n8n-workflow.json`)
+
+Gotowy do zaimportowania workflow "Lead Qualification Demo":
+
+1. Otwórz n8n pod `http://localhost:5678`.
+2. Menu (⋮) → **Import from File** → wybierz `n8n-workflow.json`.
+3. Workflow zawiera Sticky Notes z opisem każdego kroku (po polsku) — gotowe
+   do prezentacji na żywo klientowi.
+
+Kroki workflow:
+
+1. **Webhook - Nowy Lead** (`POST /lead-intake`) — przyjmuje dane leada.
+2. **HTTP Request - Kwalifikacja AI (FastAPI)** — wysyła leada do
+   `POST http://localhost:8000/webhook/lead`, gdzie Claude API ocenia jego
+   jakość i generuje odpowiedź.
+3. **IF - Czy Hot Lead? (score > 60)** — rozgałęzia workflow na podstawie
+   `qualified_score`:
+   - **TRUE** → **HTTP Request - Powiadomienie Telegram** wywołuje
+     `POST /webhook/telegram-approval`, wysyłając powiadomienie o hot leadzie.
+   - **FALSE** → **Set - Low Priority** oznacza leada jako `low priority`,
+     bez wysyłania powiadomienia.
+4. **Respond to Webhook - Potwierdzenie** — zwraca potwierdzenie wraz z
+   wygenerowaną przez AI odpowiedzią i wynikiem kwalifikacji.
+
+Przed testem zaktualizuj credentiale/URL w węzłach HTTP Request, jeśli backend
+działa pod innym adresem niż `http://localhost:8000` (np. wewnątrz sieci
+Docker Compose adresem będzie `http://backend:8000`).
 
 ## Zatrzymanie środowiska
 
