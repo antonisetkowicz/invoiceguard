@@ -1,11 +1,12 @@
 # Demo Automation AI
 
-Środowisko demo do automatyzacji AI oparte na n8n, PostgreSQL i backendzie
-FastAPI. Zawiera bazę danych n8n oraz osobną bazę `demo_leads` z przykładową
-tabelą `leads`, a także serwis FastAPI (`backend/`), który jest sercem
-workflow "lead qualification + auto-response": przyjmuje leady, ocenia ich
-jakość i generuje spersonalizowaną odpowiedź przez Claude API, a przed
-wysyłką prosi o zatwierdzenie na Telegramie (human-in-the-loop).
+Środowisko demo do automatyzacji AI oparte na n8n, PostgreSQL, backendzie
+FastAPI i dashboardzie React. Zawiera bazę danych n8n oraz osobną bazę
+`demo_leads` z przykładową tabelą `leads`, serwis FastAPI (`backend/`), który
+jest sercem workflow "lead qualification + auto-response" (przyjmuje leady,
+ocenia ich jakość i generuje spersonalizowaną odpowiedź przez Claude API, a
+przed wysyłką prosi o zatwierdzenie na Telegramie), oraz dashboard
+(`frontend/`) do prezentacji na callach sprzedażowych.
 
 ## Struktura
 
@@ -20,6 +21,11 @@ wysyłką prosi o zatwierdzenie na Telegramie (human-in-the-loop).
     /requirements.txt
     /.env.example
     /Dockerfile
+  /frontend
+    /src
+      App.tsx, components/, hooks/, lib/api.ts
+    /package.json
+    /.env.example
   /n8n-workflow.json
   /README.md
 ```
@@ -120,6 +126,35 @@ uvicorn app.main:app --reload
 ```
 
 Dokumentacja OpenAPI dostępna jest pod `http://localhost:8000/docs`.
+
+## Dashboard React (`frontend/`)
+
+Dashboard do pokazywania na callach sprzedażowych — ciemny motyw, gradientowe
+akcenty, formularz do symulowania leadów i podgląd wyników AI na żywo (polling
+`GET /leads` co 3s).
+
+Uruchomienie lokalnie:
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Dashboard będzie dostępny pod `http://localhost:5173` i domyślnie łączy się z
+backendem pod `http://localhost:8000` (zmień `VITE_API_BASE_URL` w `.env`,
+jeśli backend działa pod innym adresem).
+
+Funkcje:
+
+- Formularz "Symuluj nowego leada" — wysyła `POST /webhook/lead`, karta leada
+  pojawia się natychmiast (optymistycznie) w stanie "Ocena w toku".
+- Lista leadów jako karty z animacją wejścia, kolorowym badge'em
+  `qualified_score` (czerwony <40, żółty 40-70, zielony >70) i rozwijanym
+  panelem z odpowiedzią AI.
+- Licznik metryk u góry: liczba leadów przetworzonych dzisiaj, liczba "hot"
+  leadów oraz średni czas odpowiedzi (metryka symulowana na potrzeby demo).
 
 ## Workflow n8n (`n8n-workflow.json`)
 
