@@ -85,7 +85,80 @@ async function main() {
 
   await prisma.invoice.createMany({ data: invoices });
 
+  // ── Dropshipping AI Automation demo data ──────────────────────
+  const supAlpha = await prisma.supplier.create({
+    data: { name: "ShenzhenPrime Co.", country: "CN", avgShippingDays: 12, rating: 4.6, reliability: 0.94, organizationId: org.id },
+  });
+  const supBeta = await prisma.supplier.create({
+    data: { name: "GlobalDrop Direct", country: "CN", avgShippingDays: 20, rating: 3.1, reliability: 0.72, organizationId: org.id },
+  });
+  const supGamma = await prisma.supplier.create({
+    data: { name: "EU FastFulfil", country: "PL", avgShippingDays: 4, rating: 4.8, reliability: 0.97, organizationId: org.id },
+  });
+
+  const productSeed = [
+    { name: "Portable Mini Blender Pro", category: "Kitchen", supplierPrice: 8.5, shippingCost: 3.0, sellingPrice: 34.99, stock: 120, status: "winner", supplierId: supGamma.id, aiScore: 82, aiVerdict: "Winner" },
+    { name: "LED Sunset Projection Lamp", category: "Home Decor", supplierPrice: 5.2, shippingCost: 2.4, sellingPrice: 29.99, stock: 60, status: "active", supplierId: supAlpha.id, aiScore: 78, aiVerdict: "Winner" },
+    { name: "Posture Corrector Belt", category: "Health", supplierPrice: 4.1, shippingCost: 2.0, sellingPrice: 24.99, stock: 8, status: "active", supplierId: supAlpha.id, aiScore: 64, aiVerdict: "Promising" },
+    { name: "Magnetic Phone Mount", category: "Accessories", supplierPrice: 3.0, shippingCost: 1.5, sellingPrice: 9.99, stock: 200, status: "active", supplierId: supBeta.id, aiScore: 41, aiVerdict: "Risky" },
+    { name: "Heavy Steel Garden Statue", category: "Garden", supplierPrice: 42.0, shippingCost: 28.0, sellingPrice: 79.99, stock: 15, status: "draft", supplierId: supBeta.id, aiScore: 28, aiVerdict: "Avoid" },
+    { name: "Pet Hair Remover Roller", category: "Pet", supplierPrice: 3.8, shippingCost: 2.2, sellingPrice: 19.99, stock: 5, status: "active", supplierId: supGamma.id, aiScore: 71, aiVerdict: "Promising" },
+  ];
+
+  const createdProducts = [];
+  for (const p of productSeed) {
+    createdProducts.push(
+      await prisma.product.create({
+        data: {
+          ...p,
+          aiReasons: JSON.stringify([
+            `$${p.sellingPrice.toFixed(2)} price point evaluated for impulse buying`,
+            `${Math.round(((p.sellingPrice - p.supplierPrice - p.shippingCost) / p.sellingPrice) * 100)}% gross margin`,
+          ]),
+          aiSource: "heuristic",
+          aiGeneratedAt: new Date(),
+          organizationId: org.id,
+        },
+      })
+    );
+  }
+
+  const orderSeed = [
+    { product: createdProducts[0], customer: "Emma Johnson", qty: 1, status: "new" },
+    { product: createdProducts[0], customer: "Liam Smith", qty: 2, status: "paid" },
+    { product: createdProducts[1], customer: "Olivia Brown", qty: 1, status: "shipped" },
+    { product: createdProducts[2], customer: "Noah Davis", qty: 1, status: "new" },
+    { product: createdProducts[5], customer: "Ava Wilson", qty: 3, status: "delivered" },
+  ];
+  for (let i = 0; i < orderSeed.length; i++) {
+    const o = orderSeed[i];
+    await prisma.order.create({
+      data: {
+        orderNumber: `ORD-${1000 + i}`,
+        customerName: o.customer,
+        customerEmail: o.customer.toLowerCase().replace(" ", ".") + "@example.com",
+        productId: o.product.id,
+        quantity: o.qty,
+        salePrice: Math.round(o.product.sellingPrice * o.qty * 100) / 100,
+        cost: Math.round((o.product.supplierPrice + o.product.shippingCost) * o.qty * 100) / 100,
+        status: o.status,
+        organizationId: org.id,
+      },
+    });
+  }
+
+  await prisma.automationRule.createMany({
+    data: [
+      { name: "Auto-fulfill paid orders", trigger: "new_order", threshold: 0, action: "auto_fulfill", organizationId: org.id },
+      { name: "Pause low-margin products", trigger: "low_margin", threshold: 0.3, action: "pause_product", organizationId: org.id },
+      { name: "Restock alert on low stock", trigger: "low_stock", threshold: 10, action: "restock_alert", organizationId: org.id },
+      { name: "Promote winning products", trigger: "high_score", threshold: 75, action: "tag_winner", organizationId: org.id },
+      { name: "Flag risky suppliers", trigger: "supplier_risk", threshold: 3.5, action: "flag", enabled: false, organizationId: org.id },
+    ],
+  });
+
   console.log(`Seeded: 1 org, 1 user, ${invoices.length} invoices`);
+  console.log(`Dropshipping: 3 suppliers, ${createdProducts.length} products, ${orderSeed.length} orders, 5 automation rules`);
   console.log("Demo login: demo@invoiceguard.com / demo1234");
 }
 
