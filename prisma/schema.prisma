@@ -16,6 +16,11 @@ model Organization {
   users     User[]
   invoices  Invoice[]
   alerts    AuditAlert[]
+  products        Product[]
+  suppliers       Supplier[]
+  orders          Order[]
+  automationRules AutomationRule[]
+  automationLogs  AutomationLog[]
 }
 
 model User {
@@ -84,4 +89,119 @@ model AuditAlert {
   @@index([organizationId])
   @@index([type])
   @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// Dropshipping AI Automation
+// ─────────────────────────────────────────────────────────────
+
+model Supplier {
+  id              String   @id @default(cuid())
+  name            String
+  country         String?
+  avgShippingDays Int      @default(14)
+  rating          Float    @default(0) // 0-5 marketplace rating
+  reliability     Float    @default(0) // 0-1 on-time fulfillment rate
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  products        Product[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
+model Product {
+  id             String    @id @default(cuid())
+  name           String
+  sku            String?
+  category       String?
+  sourceUrl      String?
+  imageUrl       String?
+  supplierPrice  Float     @default(0) // unit cost from supplier
+  shippingCost   Float     @default(0) // per-unit shipping
+  sellingPrice   Float     @default(0) // current retail price
+  currency       String    @default("USD")
+  stock          Int       @default(0)
+  status         String    @default("draft") // draft | active | paused | winner | archived
+
+  // AI-generated fields
+  aiScore        Int?      // 0-100 dropshipping potential
+  aiVerdict      String?   // Winner | Promising | Risky | Avoid
+  aiReasons      String?   // JSON-encoded string[]
+  aiTitle        String?
+  aiDescription  String?
+  aiTags         String?   // JSON-encoded string[]
+  aiAdCopy       String?
+  aiSource       String?   // claude | heuristic
+  aiGeneratedAt  DateTime?
+
+  supplierId     String?
+  supplier       Supplier? @relation(fields: [supplierId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  orders         Order[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+model Order {
+  id             String   @id @default(cuid())
+  orderNumber    String
+  customerName   String
+  customerEmail  String?
+  productId      String?
+  product        Product? @relation(fields: [productId], references: [id])
+  quantity       Int      @default(1)
+  salePrice      Float    @default(0) // total charged to customer
+  cost           Float    @default(0) // total supplier + shipping cost
+  status         String   @default("new") // new | paid | fulfilled | shipped | delivered | cancelled | refunded
+  fulfillment    String   @default("manual") // manual | auto
+  trackingNumber String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+model AutomationRule {
+  id             String    @id @default(cuid())
+  name           String
+  description    String?
+  trigger        String    // low_margin | low_stock | high_score | new_order | supplier_risk
+  threshold      Float     @default(0)
+  action         String    // flag | pause_product | tag_winner | auto_fulfill | restock_alert
+  enabled        Boolean   @default(true)
+  timesTriggered Int       @default(0)
+  lastTriggered  DateTime?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  logs           AutomationLog[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([organizationId])
+}
+
+model AutomationLog {
+  id             String   @id @default(cuid())
+  ruleId         String?
+  rule           AutomationRule? @relation(fields: [ruleId], references: [id])
+  action         String
+  message        String
+  level          String   @default("info") // info | success | warning
+  entityType     String?  // product | order
+  entityId       String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([ruleId])
 }

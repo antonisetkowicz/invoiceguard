@@ -29,3 +29,25 @@ export interface AuditResult {
   duplicates: { invoiceId: string; matchedInvoiceId: string; similarity: number; amountAtRisk: number }[];
   anomalies: { invoiceId: string; reason: string; severity: string; amountAtRisk: number }[];
 }
+
+export interface DropshipStats {
+  totalProducts: number;
+  activeProducts: number;
+  winners: number;
+  avgMarginPct: number;
+  totalRevenue: number;
+  totalProfit: number;
+  openOrders: number;
+  autoFulfilledOrders: number;
+  activeRules: number;
+  automationActions: number;
+  productsByStatus: { status: string; count: number }[];
+  topProducts: { id: string; name: string; score: number | null; marginPct: number; profit: number }[];
+  recentLogs: {
+    id: string;
+    action: string;
+    message: string;
+    level: string;
+    createdAt: string;
+  }[];
+}
