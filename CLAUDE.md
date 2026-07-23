@@ -24,7 +24,7 @@ Pipeline, który autonomicznie **tworzy → buduje → wdraża → marketinguje*
   3. `copywriter` → `copy.json` (landing PL, cold-email, social, SEO)
   4. `web-builder` → `site/` (landing/MVP, domyślnie statyczny landing)
   5. `deployer` → `deployment.json` (Vercel MCP; zakup domeny = eskalacja)
-  6. `marketing-specialist` → `marketing_report.json` (Ayrshare + import Instantly)
+  6. `marketing-specialist` → `marketing_report.json` (DARMOWY silnik pozyskiwania klientów: WebSearch realnych firm ICP → publiczne adresy z ich stron → spersonalizowane cold-maile jako DRAFTY w Gmailu, człowiek wysyła; social jako pliki + Buffer Free. Bez płatnych: Ayrshare/Instantly opcjonalne. Szczegóły „System pozyskiwania klientów" w `.claude/agents/marketing-specialist.md`)
   7. `analytics-tracker` → `analytics_setup.json` (baseline dnia 0)
 - **Stan runu**: `./run/<ts>/state.json` (każdy agent scala) + `log.md` (log decyzji). Katalog `run/*` jest **gitignorowany** (efemeryczny) — artefakty runów nie trafiają do repo.
 - **Human-in-the-loop**: `HUMAN_ACTION_REQUIRED.md` (gitignorowany) powstaje tylko gdy potrzebna akcja człowieka; agent DOPISUJE sekcję, nie nadpisuje. Format: `HUMAN_ACTION_REQUIRED.template.md`.

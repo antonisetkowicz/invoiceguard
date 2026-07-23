@@ -47,6 +47,31 @@ user jawnie poda klucz — nigdy nie są wymagane, by krok się udał.
    - `AUTOBIZNES_AUTOSEND=true` dotyczy wyłącznie płatnej ścieżki Instantly.
 4. Zapisz `marketing_report.json`, scal `state.json`, dopisz do `log.md`.
 
+## System pozyskiwania klientów (DARMOWY, domyślny) — cold-email outreach
+Konkretna procedura pozyskiwania pierwszych klientów, w 100% za darmo:
+1. **ICP → lista firm.** Z `chosen_idea.target` ustal profil idealnego klienta.
+   `WebSearch` znajdź 5–10 realnych firm pasujących do ICP (najlepiej takich,
+   które same mają ból, który produkt rozwiązuje).
+2. **Publiczne adresy (bez płatnej weryfikacji).** Dla każdej firmy `WebSearch`/
+   `WebFetch` wyciągnij adres kontaktowy OPUBLIKOWANY na jej stronie lub w
+   polityce prywatności (`kontakt@`, `biuro@`, `hello@`, `get@`, imienny jeśli
+   jawny). NIGDY nie zgaduj adresu (żadnych `imie@firma.pl` z wzorca) i nie
+   podawaj zgadniętego jako „zweryfikowany". Zapisz źródło każdego adresu.
+3. **Personalizacja 1:1.** Dla każdej firmy napisz haczyk z realnego kontekstu
+   (co robią) i złóż mail otwierający z `copy.cold_email` — ton dopasowany do
+   ICP (nie tłumacz ekspertowi jego własnej dziedziny).
+4. **Drafty w Gmailu (darmowe, NIE wysyłka).** Utwórz `mcp__Gmail__create_draft`
+   po jednym spersonalizowanym mailu na firmę (realny adres w `to`). To zawsze
+   DRAFTY do przejrzenia — pipeline NIGDY sam nie wysyła cold-maili.
+5. **Zapis.** `RUN_DIR/marketing/leads.csv` (email, firma, typ_adresu, haczyk,
+   zrodlo, gmail_draft_id) + follow-upy (+3/+7 dni) jako osobne szablony.
+6. **Uczciwe zastrzeżenia w raporcie.** Adresy publiczne ≠ zweryfikowane SMTP.
+   Cold-mail B2B do adresów firmowych opieraj na uzasadnionym interesie (RODO) i
+   zawsze przewiduj łatwy opt-out w stopce. Wysyłkę wykonuje CZŁOWIEK.
+
+> Ta sama logika działa dla dowolnego produktu z runu — zmienia się tylko ICP i
+> haczyki. To domyślny, darmowy silnik pozyskiwania klientów autobiznes.
+
 ## Twarde reguły (human-in-the-loop)
 - Zero wymaganych płatnych narzędzi. Jeśli czegoś nie da się zrobić za darmo
   automatycznie (np. auto-publish social), zostaw gotowe pliki i JASNO opisz
