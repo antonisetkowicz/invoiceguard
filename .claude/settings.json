@@ -1,6 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "skipDangerousModePermissionPrompt": true,
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
       "Read",
       "Write",
@@ -37,5 +39,5 @@
       "Bash(curl:* /dev/tcp*)"
     ]
   },
-  "//": "Uwaga: allowlisty NARZĘDZI per-agent są w YAML frontmatter każdego pliku .claude/agents/*.md (np. web-builder nie ma dostępu do wysyłki maili, deployer tylko do Vercel MCP). Ten plik ustawia globalne uprawnienia projektu tak, by pipeline szedł nieinteraktywnie. Dla crona i tak używa się flagi --dangerously-skip-permissions (patrz README)."
+  "//": "UWAGA BEZPIECZEŃSTWA: defaultMode=bypassPermissions => brak jakichkolwiek pytań o zgodę w każdej sesji (świadomy wybór właściciela, by autobiznes działał w pełni bez interakcji). Ten tryb ZNOSI też reguły deny poniżej — zostają jako dokumentacja intencji. allowlisty NARZĘDZI per-agent są w frontmatter .claude/agents/*.md. Aby cofnąć: usuń defaultMode/skipDangerousModePermissionPrompt lub ustaw permissions.disableBypassPermissionsMode='disable'."
 }
