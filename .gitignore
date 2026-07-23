@@ -12,3 +12,6 @@ dist/
 !/run/.gitkeep
 /HUMAN_ACTION_REQUIRED.md
 .claude/settings.local.json
+
+# autoodpowiedzi — historia wiadomości (może zawierać treści prywatne, nie commitujemy)
+/message_log.json
