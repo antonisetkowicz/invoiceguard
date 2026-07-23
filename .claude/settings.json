@@ -26,13 +26,13 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git diff:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(git push:*)"
     ],
     "deny": [
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(./**/.env)",
-      "Bash(git push:*)",
       "Bash(rm -rf /*)",
       "Bash(curl:* /dev/tcp*)"
     ]
