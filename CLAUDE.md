@@ -1,8 +1,9 @@
 # CLAUDE.md — pamięć projektu
 
-To repo zawiera DWA byty:
+To repo zawiera TRZY byty:
 1. **InvoiceGuard** — istniejący SaaS (Next.js 15 + React 19 + TypeScript + Prisma + Postgres). Audyt faktur B2B / odzysk kosztów.
 2. **autobiznes** — autonomiczny system biznesowy zbudowany w `.claude/`, uruchamiany komendą `/autobiznes`.
+3. **autoodpowiedzi** — asystent automatycznego reagowania na e-mail/WhatsApp zbudowany w `.claude/`, uruchamiany komendą `/autoodpowiedzi`.
 
 ---
 
@@ -37,6 +38,53 @@ Pipeline, który autonomicznie **tworzy → buduje → wdraża → marketinguje*
 
 ### Jak dodać nowego subagenta
 Nowy `.claude/agents/<nazwa>.md` (frontmatter: `name`, `description`, `model: claude-sonnet-5`, `tools`) + wpięcie w tabelę kroków w `.claude/commands/autobiznes.md`. Szczegóły w `README.autobiznes.md`.
+
+---
+
+## autoodpowiedzi — jak to działa
+
+Asystent (NIE autopilot) reagowania na przychodzące e-maile i WhatsApp.
+Priorytet: nigdy nie wysłać czegoś niewłaściwego w imieniu użytkownika —
+auto-send tylko dla wąskiej, ręcznie zatwierdzonej białej listy; wszystko
+inne to gotowy draft do akceptacji.
+
+### Uruchomienie
+- `/autoodpowiedzi` — pełny przebieg (email + WhatsApp).
+- `/autoodpowiedzi email` / `/autoodpowiedzi whatsapp` — jeden kanał.
+
+### Architektura
+- **Orkiestrator**: `.claude/commands/autoodpowiedzi.md` — wywołuje 6
+  subagentów 1→6 sekwencyjnie, leci na najsilniejszym dostępnym modelu
+  (klasyfikacja to krok, gdzie błąd kosztuje najwięcej).
+- **6 subagentów** w `.claude/agents/*.md`, izolowane, komunikacja tylko
+  przez pliki w `./run/<ISO-timestamp>/`: `email-watcher` →
+  `whatsapp-watcher` → `classifier` (bramka bezpieczeństwa) →
+  `draft-responder` → `auto-sender` → `escalation-notifier`.
+- **Biała lista**: `whitelist.json` (root, **nie** gitignorowany) — startuje
+  pusta, edytowana WYŁĄCZNIE ręcznie przez użytkownika.
+- **Trwała historia**: `message_log.json` (root, gitignorowany — dane
+  prywatne) — append-only, zapobiega podwójnemu przetworzeniu.
+- **Human-in-the-loop**: ten sam `HUMAN_ACTION_REQUIRED.md` co autobiznes
+  (dopisywany, nie nadpisywany).
+
+### Ograniczenie techniczne (WAŻNE)
+Gmail MCP w tej sesji NIE ma narzędzia do wysyłki (tylko `create_draft`/
+`update_draft`) — auto-send dla e-maila jest dziś technicznie niemożliwy.
+Wszystkie e-maile lądują jako draft; te z whitelisty dostają etykietę
+`auto-odpowiedzi/gotowe-do-wyslania`. Realny auto-send działa tylko dla
+WhatsApp (Twilio, domyślna integracja A z README.autoodpowiedzi.md), i
+tylko dla whitelisty + `sensitivity: low`. Szczegóły w
+`.claude/agents/auto-sender.md` i `README.autoodpowiedzi.md`.
+
+### Zasady twarde
+- `sensitivity: medium/high` (pieniądze/prawo/zdrowie/relacje/nieznany
+  nadawca) zawsze wyklucza auto-send, niezależnie od whitelisty.
+- W razie wątpliwości klasyfikator ZAWSZE wybiera draft, nigdy nie zgaduje
+  w stronę auto-send.
+- Sekrety wyłącznie przez `.env` (patrz `.env.example`): `WHATSAPP_INTEGRATION`,
+  `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_WHATSAPP_NUMBER`,
+  `WHATSAPP_LOCAL_BRIDGE_URL`, `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`
+  (współdzielone z autobiznes).
 
 ---
 
