@@ -72,8 +72,23 @@ Wygeneruj `RUN_DIR/SUMMARY.md`:
   poszło automatycznie").
 - Następne kroki / rekomendacje na kolejny run.
 
-Na końcu wypisz użytkownikowi zwięzłe podsumowanie + ścieżkę do `SUMMARY.md`
-i informację, czy `HUMAN_ACTION_REQUIRED.md` jest niepusty.
+## RAPORT KOŃCOWY (ZAWSZE — wypisz użytkownikowi w czacie)
+Na końcu KAŻDEGO runu (niezależnie od wyniku) wypisz użytkownikowi w
+odpowiedzi pełny raport zawierający:
+1. **Produkt** + status (LIVE / zatrzymany / zablokowany).
+2. **Linki do stron** — wszystkie URL-e z `deployment.json`:
+   - produkcyjny URL, a jeśli deployment jest za ochroną (403) — także
+     tymczasowy link podglądu (`get_access_to_vercel_url`).
+3. **Tabela kroków 1→7** — co wyprodukował każdy krok.
+4. **Wszystkie utworzone pliki** — pełne ścieżki artefaktów runu
+   (`run/<TS>/...`: ideas.json, chosen_idea.json, copy.json, site/,
+   deployment.json, marketing/, analytics_setup.json, log.md, SUMMARY.md).
+5. **Wymaga Ciebie** — pełna lista pozycji z `HUMAN_ACTION_REQUIRED.md`
+   (albo „nic — wszystko automatycznie") + jasna informacja, czy plik jest
+   niepusty.
+6. **Ścieżka do `SUMMARY.md`** i następne kroki.
+
+Ten raport jest OBOWIĄZKOWY na koniec pracy autobiznes — nie pomijaj go.
 
 ## Zasady twarde
 - Sekrety tylko z `.env` — nigdy nie wpisuj kluczy do artefaktów runu.

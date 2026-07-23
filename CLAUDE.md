@@ -24,17 +24,19 @@ Pipeline, który autonomicznie **tworzy → buduje → wdraża → marketinguje*
   3. `copywriter` → `copy.json` (landing PL, cold-email, social, SEO)
   4. `web-builder` → `site/` (landing/MVP, domyślnie statyczny landing)
   5. `deployer` → `deployment.json` (Vercel MCP; zakup domeny = eskalacja)
-  6. `marketing-specialist` → `marketing_report.json` (Ayrshare + import Instantly)
+  6. `marketing-specialist` → `marketing_report.json` (DARMOWY silnik pozyskiwania klientów: WebSearch realnych firm ICP → publiczne adresy z ich stron → spersonalizowane cold-maile jako DRAFTY w Gmailu, człowiek wysyła; social jako pliki + Buffer Free. Bez płatnych: Ayrshare/Instantly opcjonalne. Szczegóły „System pozyskiwania klientów" w `.claude/agents/marketing-specialist.md`)
   7. `analytics-tracker` → `analytics_setup.json` (baseline dnia 0)
 - **Stan runu**: `./run/<ts>/state.json` (każdy agent scala) + `log.md` (log decyzji). Katalog `run/*` jest **gitignorowany** (efemeryczny) — artefakty runów nie trafiają do repo.
 - **Human-in-the-loop**: `HUMAN_ACTION_REQUIRED.md` (gitignorowany) powstaje tylko gdy potrzebna akcja człowieka; agent DOPISUJE sekcję, nie nadpisuje. Format: `HUMAN_ACTION_REQUIRED.template.md`.
 
 ### Zasady twarde (przestrzegaj zawsze)
-- Sekrety WYŁĄCZNIE przez `.env` (patrz `.env.example`): `AYRSHARE_API_KEY`, `INSTANTLY_API_KEY`, `VERCEL_TOKEN`, `WINDSOR_API_KEY`/`SUPERMETRICS_API_KEY`, `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`, `AUTOBIZNES_AUTOSEND`. Nigdy nie hardcoduj.
+- **TYLKO DARMOWE NARZĘDZIA (domyślnie)**: każdy krok pipeline'u musi być wykonalny za darmo. Płatne usługi (Ayrshare, Instantly, Windsor, Supermetrics, płatne konektory, zakup domeny) są WYŁĄCZNIE opcjonalnym upgradem — nigdy nie mogą być warunkiem powodzenia kroku. Domyślny stack: WebSearch/WebFetch (research), Vercel Hobby (deploy `*.vercel.app`), Formspree Free / Google Forms (leady), posty jako pliki + Buffer Free (social), sekwencja+CSV / darmowe drafty Gmail (cold-email), Vercel Web Analytics free / Neon-Supabase free Postgres / plik (analytics), Telegram Bot (alerty). Jeśli czegoś nie da się zrobić za darmo automatycznie — zostaw gotowe pliki i opisz krótką darmową akcję ręczną w `HUMAN_ACTION_REQUIRED.md`.
+- Sekrety WYŁĄCZNIE przez `.env` (patrz `.env.example`). Płatne klucze (`AYRSHARE_API_KEY`, `INSTANTLY_API_KEY`, `WINDSOR_API_KEY`/`SUPERMETRICS_API_KEY`) opcjonalne; darmowe: `LEAD_FORM_ENDPOINT` (Formspree), `DATABASE_URL` (Neon/Supabase free), `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`, `AUTOBIZNES_AUTOSEND`. Nigdy nie hardcoduj.
 - Nic wymagającego płatności kartą / 2FA / CAPTCHA / podpisu / decyzji prawnej → eskalacja do `HUMAN_ACTION_REQUIRED.md`, nie rób sam.
 - Pierwszy batch cold-email NIE jest wysyłany bez zgody — chyba że `AUTOBIZNES_AUTOSEND=true`.
 - Subagenty nie mają dostępu do siebie — tylko przez pliki w `RUN_DIR`.
 - Cron (macOS): gotowy wpis w `README.autobiznes.md` (`--dangerously-skip-permissions` + alert Telegram gdy `HUMAN_ACTION_REQUIRED.md` niepusty).
+- **RAPORT KOŃCOWY (zawsze)**: na koniec KAŻDEGO runu autobiznes wypisz użytkownikowi w czacie pełny raport: produkt+status, WSZYSTKIE linki do stron (produkcyjny URL + tymczasowy link podglądu, jeśli deployment za ochroną 403), tabela kroków 1→7, pełne ścieżki wszystkich utworzonych plików (`run/<TS>/...`), lista „Wymaga Ciebie" z `HUMAN_ACTION_REQUIRED.md` oraz ścieżka do `SUMMARY.md`. Szczegóły w sekcji „RAPORT KOŃCOWY" w `.claude/commands/autobiznes.md`.
 
 ### Jak dodać nowego subagenta
 Nowy `.claude/agents/<nazwa>.md` (frontmatter: `name`, `description`, `model: claude-sonnet-5`, `tools`) + wpięcie w tabelę kroków w `.claude/commands/autobiznes.md`. Szczegóły w `README.autobiznes.md`.
