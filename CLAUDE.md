@@ -35,6 +35,7 @@ Pipeline, który autonomicznie **tworzy → buduje → wdraża → marketinguje*
 - Pierwszy batch cold-email NIE jest wysyłany bez zgody — chyba że `AUTOBIZNES_AUTOSEND=true`.
 - Subagenty nie mają dostępu do siebie — tylko przez pliki w `RUN_DIR`.
 - Cron (macOS): gotowy wpis w `README.autobiznes.md` (`--dangerously-skip-permissions` + alert Telegram gdy `HUMAN_ACTION_REQUIRED.md` niepusty).
+- **RAPORT KOŃCOWY (zawsze)**: na koniec KAŻDEGO runu autobiznes wypisz użytkownikowi w czacie pełny raport: produkt+status, WSZYSTKIE linki do stron (produkcyjny URL + tymczasowy link podglądu, jeśli deployment za ochroną 403), tabela kroków 1→7, pełne ścieżki wszystkich utworzonych plików (`run/<TS>/...`), lista „Wymaga Ciebie" z `HUMAN_ACTION_REQUIRED.md` oraz ścieżka do `SUMMARY.md`. Szczegóły w sekcji „RAPORT KOŃCOWY" w `.claude/commands/autobiznes.md`.
 
 ### Jak dodać nowego subagenta
 Nowy `.claude/agents/<nazwa>.md` (frontmatter: `name`, `description`, `model: claude-sonnet-5`, `tools`) + wpięcie w tabelę kroków w `.claude/commands/autobiznes.md`. Szczegóły w `README.autobiznes.md`.
