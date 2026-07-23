@@ -41,6 +41,9 @@ Pipeline, który autonomicznie **tworzy → buduje → wdraża → marketinguje*
 ### Jak dodać nowego subagenta
 Nowy `.claude/agents/<nazwa>.md` (frontmatter: `name`, `description`, `model: claude-sonnet-5`, `tools`) + wpięcie w tabelę kroków w `.claude/commands/autobiznes.md`. Szczegóły w `README.autobiznes.md`.
 
+### Komenda /coldmail (samodzielny silnik pozyskiwania klientów)
+`.claude/commands/coldmail.md` — `/coldmail branża: <...>, miasto: <...>, liczba: <n>`. Namierza realne firmy (Google Maps + Panorama Firm + strony), wyciąga TYLKO publiczne adresy e-mail (bez zgadywania, bez płatnej weryfikacji SMTP), pisze spersonalizowany mail 1:1 pod każdą i tworzy WERSJE ROBOCZE w Gmailu pod konkretny adres. NIGDY nie wysyła — człowiek wysyła ręcznie. Darmowe narzędzia, RODO/opt-out, uczciwe zastrzeżenia w raporcie.
+
 ---
 
 ## autoodpowiedzi — jak to działa
