@@ -44,6 +44,9 @@ Nowy `.claude/agents/<nazwa>.md` (frontmatter: `name`, `description`, `model: cl
 ### Komenda /coldmail (samodzielny silnik pozyskiwania klientów)
 `.claude/commands/coldmail.md` — `/coldmail branża: <...>, miasto: <...>, liczba: <n>`. Namierza realne firmy (Google Maps + Panorama Firm + strony), wyciąga TYLKO publiczne adresy e-mail (bez zgadywania, bez płatnej weryfikacji SMTP), pisze spersonalizowany mail 1:1 pod każdą i tworzy WERSJE ROBOCZE w Gmailu pod konkretny adres. NIGDY nie wysyła — człowiek wysyła ręcznie. Darmowe narzędzia, RODO/opt-out, uczciwe zastrzeżenia w raporcie.
 
+### Komenda /wyslij (auto-wysyłka — ŚWIADOME RYZYKO) ⚠️
+`.claude/commands/wyslij.md` — `/wyslij leady: <CSV>, temat: <...>`. W odróżnieniu od `/coldmail`, ta komenda **faktycznie wysyła** e-maile (nie tylko drafty), przez **MailerLite** (jedyny darmowy konektor z realną wysyłką — Gmail w tej sesji nie ma narzędzia do wysyłki). **Ryzyko zaakceptowane przez właściciela**: MailerLite jest ESP dla list opt-in i zabrania w regulaminie wysyłki do niezasubskrybowanych kontaktów B2B (jak leady z `/coldmail`) — użycie w ten sposób łamie ToS dostawcy i grozi zawieszeniem konta. Cold B2B e-mail z opt-outem jest legalny (RODO/uzasadniony interes); ryzykiem NIE jest prawo, tylko regulamin platformy. Rzeczywista wysyłka wykonuje się TYLKO gdy `AUTOBIZNES_AUTOSEND=true` w `.env` — bez tego komenda tworzy kampanię jako draft w MailerLite i eskaluje do `HUMAN_ACTION_REQUIRED.md`. **Nie jest wpięta w krok 6 `/autobiznes`** — tam zostaje bezpieczna ścieżka (drafty Gmail); `/wyslij` odpala się świadomie, osobno.
+
 ---
 
 ## autoodpowiedzi — jak to działa
