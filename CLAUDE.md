@@ -1,9 +1,10 @@
 # CLAUDE.md — pamięć projektu
 
-To repo zawiera TRZY byty:
+To repo zawiera CZTERY byty:
 1. **InvoiceGuard** — istniejący SaaS (Next.js 15 + React 19 + TypeScript + Prisma + Postgres). Audyt faktur B2B / odzysk kosztów.
 2. **autobiznes** — autonomiczny system biznesowy zbudowany w `.claude/`, uruchamiany komendą `/autobiznes`.
 3. **autoodpowiedzi** — asystent automatycznego reagowania na e-mail/WhatsApp zbudowany w `.claude/`, uruchamiany komendą `/autoodpowiedzi`.
+4. **content** — pipeline produkcji i publikacji Reelsów na Instagramie (`.claude/` + `content-pipeline/`), uruchamiany komendą `/content`.
 
 ---
 
@@ -93,6 +94,56 @@ tylko dla whitelisty + `sensitivity: low`. Szczegóły w
   `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_WHATSAPP_NUMBER`,
   `WHATSAPP_LOCAL_BRIDGE_URL`, `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`
   (współdzielone z autobiznes).
+
+---
+
+## content — jak to działa
+
+Pipeline wideo: temat → scenariusz → lektor → animacje → napisy → muzyka →
+miniatura → **checkpoint człowieka** → publikacja na Instagram Reels → metryki.
+Wyłącznie darmowe narzędzia, bez karty i bez subskrypcji.
+
+### Uruchomienie
+- `/content` — temat wybiera researcher (Google Trends + metryki poprzednich Reelsów).
+- `/content <temat>` — temat narzucony.
+- `/content batch <n>` — n Reelsów, jeden zbiorczy checkpoint na końcu.
+- `/content approve` / `/content reject <powód>` — decyzja o runie czekającym na akceptację.
+
+### Architektura
+- **Orkiestrator**: `.claude/commands/content.md`.
+- **Kroki 1–2 = subagenci LLM** (`.claude/agents/content-researcher.md`,
+  `content-scriptwriter.md`) — potrzebują WebSearch i osądu.
+- **Kroki 3–10 = skrypty Pythona** w `content-pipeline/agents/01…10` —
+  deterministyczne, każdy przyjmuje `--run-dir` i wypisuje JEDEN obiekt JSON na
+  stdout. Da się je odpalać z crona bez modelu.
+- **Wspólne biblioteki**: `content-pipeline/lib/` (`runio`, `ffmpeg`, `ig_api`,
+  `hosting`, `db`).
+- **Stan runu**: `content-pipeline/logs/<TS>/` (`state.json` scalany przez
+  agentów + `log.md`). Gitignorowany, tak jak `output/`, `temp/`, `data/` i
+  `assets/music/`.
+- **Pętla uczenia**: krok 10 zapisuje metryki do SQLite (`data/content.db`),
+  krok 1 czyta z niej `top_performers` i karmi nimi researchera.
+
+### Stack (wszystko darmowe)
+edge-tts (lektor), Remotion (animacje 1080×1920), faster-whisper (transkrypcja),
+ffmpeg + libass (napisy słowo-po-słowie), ffmpeg sidechaincompress (ducking),
+Instagram Graph API (publikacja + insights), Pollinations.ai (opcjonalne tła).
+
+### Zasady twarde
+- **Nigdy nie publikuj bez zgody człowieka.** Krok 9 odmawia startu, dopóki
+  krok 8 nie zapisze `approved: true`. Flaga `--force` istnieje, ale jej nie używamy.
+- **Ayrshare NIE jest darmowe dla wideo** — darmowy plan to same zdjęcia.
+  Ścieżka domyślna to Graph API, zapasowa to publikacja ręczna.
+- Instagram Graph API wymaga **publicznego HTTPS `video_url`** (pobiera plik
+  sam). Backendy w `lib/hosting.py`: własny hosting → GitHub Release → catbox.
+  Brak któregokolwiek → tryb `manual` + wpis w `HUMAN_ACTION_REQUIRED.md`.
+- Sekrety tylko z `.env`: `IG_ACCESS_TOKEN`, `IG_USER_ID` (+ opcjonalnie
+  `PUBLIC_BASE_URL`/`PUBLIC_UPLOAD_DIR`, `CONTENT_ASSETS_REPO`,
+  `CONTENT_ALLOW_CATBOX`). Token IG wygasa co 60 dni — odnawiany ręcznie.
+- **Muzyka nigdy nie jest pobierana automatycznie** — człowiek wrzuca pliki do
+  `assets/music/` z YouTube Audio Library / Pixabay. Licencja to jego decyzja.
+- Nie twierdź, że obejrzałeś wideo. Krok 8 sprawdza metadane, nie treść obrazu.
+- Instrukcja instalacji i konfiguracji tokenu IG: `content-pipeline/README.md`.
 
 ---
 

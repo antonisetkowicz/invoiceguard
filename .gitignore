@@ -15,3 +15,19 @@ dist/
 
 # autoodpowiedzi — historia wiadomości (może zawierać treści prywatne, nie commitujemy)
 /message_log.json
+
+# /content — pipeline Instagram Reels
+# Artefakty runów, gotowe wideo i pliki tymczasowe są efemeryczne i ciężkie.
+/content-pipeline/logs/*
+!/content-pipeline/logs/.gitkeep
+/content-pipeline/output/*
+!/content-pipeline/output/.gitkeep
+/content-pipeline/temp/*
+!/content-pipeline/temp/.gitkeep
+/content-pipeline/data/*
+!/content-pipeline/data/.gitkeep
+# Muzyka: cudze utwory nie trafiają do repo (patrz assets/music/README.md)
+/content-pipeline/assets/music/*
+!/content-pipeline/assets/music/README.md
+# Lokalne nadpisanie konfiguracji
+/content-pipeline/config.json

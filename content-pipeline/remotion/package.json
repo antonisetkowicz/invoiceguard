@@ -1,0 +1,21 @@
+{
+  "name": "content-pipeline-remotion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion (open source) — render scen Reelsa 1080x1920 i miniatury. Zero płatnych API.",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts Reel out/visuals.mp4",
+    "still": "remotion still src/index.ts Thumbnail out/thumbnail.jpg"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.404",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "4.0.404"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "typescript": "5.7.3"
+  }
+}
