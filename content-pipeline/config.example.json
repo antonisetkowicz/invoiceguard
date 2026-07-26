@@ -1,0 +1,62 @@
+{
+  "//": "Skopiuj do content-pipeline/config.json i dostosuj. Wszystkie pola są opcjonalne — brakujące biorą wartości domyślne z lib/runio.py:DEFAULT_CONFIG.",
+
+  "language": "pl",
+  "voice": "pl-PL-MarekNeural",
+  "//voice": "Lista głosów: python3 content-pipeline/agents/03_voice_generator.py --run-dir x --list-voices. Polskie: pl-PL-MarekNeural (M), pl-PL-ZofiaNeural (K).",
+  "voice_rate": "+8%",
+  "voice_pitch": "+0Hz",
+
+  "handle": "@twoj_profil",
+
+  "video": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "max_duration_s": 88
+  },
+
+  "captions": {
+    "font": "DejaVu Sans",
+    "//font": "Musi być nazwą czcionki zainstalowanej w systemie (fc-list). macOS: 'Helvetica Neue', 'Impact'.",
+    "font_size": 92,
+    "primary_color": "&H00FFFFFF",
+    "highlight_color": "&H0000E5FF",
+    "//kolory": "Format ASS to &HAABBGGRR (odwrotnie niż HTML!). &H0000E5FF = amber #FFE500.",
+    "outline": 6,
+    "shadow": 2,
+    "margin_v": 420,
+    "//margin_v": "Odstęp od dołu w px — 420 trzyma napisy nad UI Instagrama.",
+    "max_chars_per_line": 18,
+    "words_per_cue": 3,
+    "engine": "faster-whisper",
+    "whisper_model": "small"
+  },
+
+  "audio": {
+    "music_gain_db": -16,
+    "duck_ratio": 8,
+    "duck_threshold": 0.045
+  },
+
+  "publish": {
+    "provider": "instagram_graph",
+    "//provider": "instagram_graph (darmowe) | manual (plik + instrukcja) | ayrshare (PŁATNE dla wideo)",
+    "hosting": "auto",
+    "//hosting": "auto | public_base_url | github_release | catbox",
+    "share_to_feed": true
+  },
+
+  "theme": {
+    "palette": [
+      ["#0f172a", "#3b0764"],
+      ["#111827", "#065f46"],
+      ["#1e1b4b", "#831843"],
+      ["#0c4a6e", "#0f172a"],
+      ["#18181b", "#7c2d12"]
+    ],
+    "accent": "#fbbf24",
+    "textColor": "#ffffff",
+    "fontFamily": "\"Inter\", \"Helvetica Neue\", \"Segoe UI\", \"DejaVu Sans\", system-ui, sans-serif"
+  }
+}
