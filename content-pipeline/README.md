@@ -265,7 +265,7 @@ testowalne, uruchamialne z crona bez modelu).
 |---|---|---|---|
 | 1 | researcher | Google Trends RSS + WebSearch | `trends.json` → `brief.json` |
 | 2 | scriptwriter | LLM + walidator | `brief.json` → `script.json` |
-| 3 | voice-generator | edge-tts | `script.json` → `voice.mp3` + timestampy |
+| 3 | voice-generator | edge-tts → Piper → espeak-ng | `script.json` → `voice.mp3` + timestampy |
 | 4 | visual-builder | Remotion | `script.json` → `visuals.mp4` 1080×1920 |
 | 5 | caption-burner | faster-whisper + ffmpeg/libass | → `captioned.mp4` |
 | 6 | audio-mixer | ffmpeg sidechaincompress | → `final.mp4` |
@@ -326,7 +326,9 @@ Kroki 1–8 da się zautomatyzować; publikacja świadomie zostaje przy człowie
 | `Nie znaleziono ffmpeg` | brak binarki | `brew install ffmpeg` albo `pip install imageio-ffmpeg` |
 | Napisy się nie pojawiły | ffmpeg bez libass | `ffmpeg -filters \| grep " ass "` — jeśli pusto, zainstaluj pełny build |
 | Napisy w złej czcionce | `captions.font` nie istnieje w systemie | sprawdź `fc-list : family`, wpisz istniejącą nazwę |
-| `edge-tts` pada | brak internetu (to usługa online) | zainstaluj `piper-tts` jako fallback offline |
+| `edge-tts` pada | brak internetu albo proxy blokujące WebSocket | zainstaluj `piper-tts` + model głosu; ostatecznie zadziała `espeak-ng` (jakość podglądowa) |
+| Lektor brzmi robotycznie | zadziałał fallback `espeak-ng` | sprawdź `quality` w `voice.json` — `placeholder` = nie publikuj, napraw edge-tts/Piper |
+| Napisy lekko się rozjeżdżają | brak Whispera → czasy szacowane | sprawdź `timing_quality` w `captions.json`; `pip install faster-whisper` |
 | Krok 4 pada na `npm install` | brak Node 18+ | zainstaluj Node LTS |
 | Whisper mieli w nieskończoność | model `small` na słabym CPU | `"whisper_model": "tiny"` w `config.json` |
 | `Graph API 190` | token wygasł | powtórz punkt 3.4 |
@@ -354,3 +356,9 @@ Uczciwa lista ograniczeń:
 - **Pollinations.ai jest dodatkiem, nie fundamentem.** Darmowe API bez SLA —
   gdy nie odpowie, scena degraduje się do gradientu i pipeline leci dalej.
 - **Muzyka nie jest pobierana automatycznie** — patrz rozdział 2.
+- **Fallbacki degradują jakość i mówią o tym wprost.** Gdy edge-tts i Piper są
+  niedostępne, lektora robi `espeak-ng` (`voice.json` → `quality:
+  "placeholder"`). Gdy nie ma Whispera ani znaczników z TTS, czasy napisów są
+  szacowane z długości audio (`captions.json` → `timing_quality: "estimated"`).
+  Oba tryby są po to, żeby dało się przejść pipeline bez sieci i obejrzeć
+  montaż — **nie do publikacji**. Sprawdzaj te pola przed akceptacją w kroku 8.

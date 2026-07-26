@@ -71,6 +71,38 @@ def words_from_tts(run: Run) -> list[dict]:
     return read_json(run.voice_meta, default={}).get("words") or []
 
 
+def words_estimated(run: Run, audio_s: float) -> list[dict]:
+    """OSTATNIA deska ratunku: rozkłada słowa narracji na długość audio
+    proporcjonalnie do liczby znaków.
+
+    Działa akceptowalnie WYŁĄCZNIE dla lektora syntetycznego, który mówi w
+    równym tempie. Dla mowy ludzkiej (pauzy, oddechy, zmiany tempa) napisy
+    będą się rozjeżdżać — dlatego to tryb ostatniego wyboru, oznaczany jako
+    `quality: "estimated"`, a nie normalna ścieżka.
+    """
+    meta = read_json(run.voice_meta, default={}) if run.voice_meta.exists() else {}
+    narration = (meta.get("narration") or "").strip()
+    if not narration and run.script.exists():
+        script = read_json(run.script, default={})
+        narration = (script.get("narration") or "").strip()
+    tokens = [t for t in re.split(r"\s+", narration) if t]
+    if not tokens or audio_s <= 0:
+        return []
+
+    # wagi: znaki + stały koszt na słowo (pauza między wyrazami)
+    weights = [len(t) + 2 for t in tokens]
+    total = float(sum(weights))
+    words: list[dict] = []
+    cursor_ms = 0.0
+    for token, weight in zip(tokens, weights):
+        span = audio_s * 1000.0 * (weight / total)
+        words.append({"word": token,
+                      "start_ms": round(cursor_ms, 1),
+                      "end_ms": round(cursor_ms + span * 0.92, 1)})
+        cursor_ms += span
+    return words
+
+
 # --------------------------------------------------------------------------- #
 # ASS
 # --------------------------------------------------------------------------- #
@@ -142,13 +174,23 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
 
     highlight = inline_color(caps["highlight_color"])
+    # maksymalne przytrzymanie ostatniego słowa grupy, gdy następna jest daleko
+    # (np. po dłuższej pauzie lektora) — bez tego napis wisiałby w ciszy
+    max_hold_ms = 600
+
     events: list[str] = []
-    for cue in cues:
+    for cue_index, cue in enumerate(cues):
+        next_cue_start = (cues[cue_index + 1][0]["start_ms"]
+                          if cue_index + 1 < len(cues) else None)
         for index, word in enumerate(cue):
             start = word["start_ms"]
-            # napis trzyma się do startu następnego słowa — brak migotania
             if index + 1 < len(cue):
                 end = cue[index + 1]["start_ms"]
+            elif next_cue_start is not None:
+                # ostatnie słowo grupy trzyma się DO STARTU następnej grupy,
+                # inaczej napisy mrugają w każdej przerwie między grupami
+                end = min(next_cue_start, max(word["end_ms"], start) + max_hold_ms)
+                end = max(end, word["end_ms"])
             else:
                 end = max(word["end_ms"], start + 120)
             end = min(end, video_duration_s * 1000)
@@ -214,6 +256,16 @@ def main() -> None:
             run.log(STEP, "Whisper niedostępny/pusty — używam znaczników słów z "
                           "edge-tts. " + "; ".join(errors))
 
+    timing_quality = "measured"
+    if not words:
+        words = words_estimated(run, duration_s(run.voice))
+        if words:
+            used_engine = "estimate (fallback)"
+            timing_quality = "estimated"
+            run.log(STEP, "Brak Whispera i brak znaczników z TTS — czasy słów "
+                          "SZACOWANE z długości audio. Napisy mogą się rozjeżdżać. "
+                          + "; ".join(errors))
+
     if not words:
         fail(run, STEP,
              "Brak jakichkolwiek znaczników czasu dla napisów. " + "; ".join(errors),
@@ -227,6 +279,7 @@ def main() -> None:
 
     write_json(run.captions, {
         "engine": used_engine,
+        "timing_quality": timing_quality,
         "model": model_size if "whisper" in used_engine else None,
         "language": cfg["language"],
         "word_count": len(words),
@@ -248,11 +301,12 @@ def main() -> None:
              hint="sprawdź, czy ffmpeg ma libass (`ffmpeg -filters | grep ass`)")
 
     run.step_done(STEP, output="captioned.mp4", engine=used_engine,
-                  words=len(words))
+                  timing_quality=timing_quality, words=len(words))
     run.log(STEP, f"Napisy wypalone ({used_engine}, {len(words)} słów, "
-                  f"{caps['words_per_cue']} słów/napis).")
+                  f"{caps['words_per_cue']} słów/napis, czasy: {timing_quality}).")
     emit({"status": "ok", "step": STEP, "output": str(run.captioned),
-          "engine": used_engine, "words": len(words), "errors": errors})
+          "engine": used_engine, "timing_quality": timing_quality,
+          "words": len(words), "errors": errors})
 
 
 if __name__ == "__main__":
