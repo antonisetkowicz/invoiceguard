@@ -45,18 +45,42 @@ się nie mieści — skróć tekst albo wydłuż scenę, nie zostawiaj tego na p
    poprawnie — rozpisuj („np." → „na przykład", „3 h" → „trzy godziny").
 
 ## Wizualizacje — `visual.kind`
-Każda scena dostaje typ renderowany kodem w Remotion (zero płatnych API):
-- `text` — duży headline na gradiencie (domyślny wybór)
-- `counter` — animowana liczba (`from`, `to`, `suffix`); używaj przy statystykach
-- `list` — numerowana lista (`items`, 2–4 pozycje); używaj przy „3 sposoby"
+
+**`footage` jest typem DOMYŚLNYM.** Reels z prawdziwymi ludźmi w tle ogląda się
+zupełnie inaczej niż planszę z tekstem — celuj w **60–75% scen jako `footage`**,
+a plansze zostaw tam, gdzie realnie coś wnoszą (liczba, lista, pointa).
+
+- `footage` — ujęcie z prawdziwymi ludźmi z banku wideo (Pexels/Pixabay).
+  Wymaga pola `query` (patrz niżej). `headline` jest OPCJONALNY — przy dobrym
+  ujęciu napisy z lektora wystarczą, a mniej tekstu = mocniejszy obraz.
+- `counter` — animowana liczba (`from`, `to`, `suffix`); przy statystykach
+- `list` — numerowana lista (`items`, 2–4 pozycje); przy „3 sposoby"
 - `quote` — cytat/pointa w cudzysłowie
+- `text` — duży headline na gradiencie
 - `shapes` — animowane kształty, kiedy tekst ma być sam
 - `gradient` — czyste tło (napisy z lektora i tak wejdą w kroku 5)
-- `image` — tło generowane przez Pollinations.ai; wymaga `prompt`.
-  Używaj OSZCZĘDNIE i tylko gdy obraz coś wnosi — to opcjonalny dodatek, przy
-  braku sieci scena degraduje się do gradientu.
+- `image` — tło generowane przez Pollinations.ai; wymaga `prompt`. Używaj
+  rzadko — `footage` jest niemal zawsze lepszym wyborem.
 
 `headline` to tekst NA EKRANIE — skrót, 2–5 słów, nie całe zdanie lektora.
+
+### Jak pisać `query` dla `footage` (to decyduje o jakości Reelsa)
+- **Po ANGIELSKU.** Banki wideo mają znikome zasoby opisane po polsku.
+- **Konkretna scena z człowiekiem**, nie abstrakcja:
+  ✅ `"frustrated business owner reviewing paper invoices at desk"`
+  ❌ `"finance"`, `"KSeF"`, `"tax compliance"` (abstrakty zwracają śmieci albo nic)
+- 4–8 słów, rzeczownik + osoba + czynność + miejsce.
+- Każda scena `footage` ma INNE `query` — pipeline nie powtórzy tego samego
+  klipu w jednym Reelsie, ale podobne zapytania dadzą nudny, jednolity montaż.
+- Dopasuj emocję ujęcia do treści sceny (problem → napięcie/zmęczenie,
+  rozwiązanie → spokój/skupienie/ulga).
+- Opcjonalnie `dim` (0–1, domyślnie 0.45) — przyciemnienie ujęcia pod tekst.
+  Podnieś do ~0.6 na jasnych kadrach, zejdź do ~0.3, gdy nie ma headline'u.
+
+**Uczciwie o ograniczeniu:** to są ujęcia stockowe, nie Ty przed kamerą. Nie
+pisz w scenariuszu niczego, co sugeruje, że osoba w kadrze mówi te słowa albo
+jest Twoim klientem — to nieprawda i widz to wyczuwa. Ujęcie ma budować
+nastrój, nie udawać świadectwa.
 
 ## Schema wyjścia — RUN_DIR/script.json
 ```json
@@ -73,12 +97,25 @@ Każda scena dostaje typ renderowany kodem w Remotion (zero płatnych API):
     {
       "text": "co mówi lektor w tej scenie",
       "duration_s": 2.5,
-      "visual": { "kind": "text", "headline": "3 godziny" }
+      "visual": {
+        "kind": "footage",
+        "query": "stressed small business owner at desk with invoices",
+        "headline": "3 godziny"
+      }
     },
     {
       "text": "...",
       "duration_s": 6,
       "visual": { "kind": "list", "items": ["Pozycja 1", "Pozycja 2"] }
+    },
+    {
+      "text": "...",
+      "duration_s": 5,
+      "visual": {
+        "kind": "footage",
+        "query": "accountant comparing documents on laptop in office",
+        "dim": 0.35
+      }
     }
   ],
   "sources": ["url z brief.json, jeśli użyto faktu"]

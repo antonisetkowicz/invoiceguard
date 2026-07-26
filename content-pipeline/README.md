@@ -63,7 +63,47 @@ python3 content-pipeline/preflight.py
 
 ---
 
-## 2. Muzyka — pobierz raz, ręcznie
+## 2. Ujęcia z ludźmi — klucz do banku wideo (darmowy, bez karty)
+
+Domyślny wygląd Reelsa to **prawdziwi ludzie w tle** (format „faceless reels"):
+ujęcie stockowe, na nim lektor i napisy słowo-po-słowie. Bez tego dostajesz
+same plansze z gradientem, które wyglądają jak prezentacja, a nie jak Reels.
+
+Ujęcia pochodzą z dwóch banków — oba **darmowe, bez karty, do użytku
+komercyjnego bez atrybucji**:
+
+1. **Pexels** (główne źródło, lepsza baza pionowych ujęć)
+   https://www.pexels.com/api/ → *Get Started* → skopiuj klucz.
+2. **Pixabay** (zapasowe, poszerza pulę)
+   https://pixabay.com/api/docs/ → klucz widoczny po zalogowaniu.
+
+Dopisz do `.env` w katalogu głównym repo:
+
+```bash
+PEXELS_API_KEY=...
+PIXABAY_API_KEY=...     # opcjonalny, ale zwiększa szansę na trafione ujęcie
+```
+
+Wystarczy jeden z nich. Bez żadnego pipeline nadal działa — sceny `footage`
+degradują się do gradientów i dostajesz wpis w `HUMAN_ACTION_REQUIRED.md`.
+
+**Jak to działa:** scriptwriter przypisuje każdej scenie `footage` zapytanie
+`query` po angielsku (np. `"frustrated business owner reviewing invoices"`),
+krok 4 wybiera najlepsze pionowe ujęcie ≥1080 px pokrywające długość sceny,
+pobiera je do `remotion/public/<run-id>/` i podkłada pod tekst. Ten sam klip
+nie powtórzy się dwa razy w jednym Reelsie. Wykorzystane ujęcia lądują w
+`footage_credits.json` w katalogu runu.
+
+> **Uwaga licencyjna.** Pexels i Pixabay pozwalają na użytek komercyjny bez
+> atrybucji, ale obie licencje **zabraniają** przedstawiania osób z ujęć w
+> sposób obraźliwy albo sugerujący, że coś reklamują lub popierają. Przy
+> Reelsach edukacyjnych to bez znaczenia; przy treściach o oszustwach, długach
+> czy chorobach dobieraj ujęcia ostrożnie — twarz ze stocku nie może wyglądać
+> na „bohatera historii".
+
+---
+
+## 3. Muzyka — pobierz raz, ręcznie
 
 Pipeline **nigdy nie pobiera muzyki automatycznie**. To celowe: licencja
 ścieżki, którą publikujesz, jest Twoją odpowiedzialnością, a jedyny sposób, by
@@ -95,7 +135,7 @@ Bez muzyki Reels i tak powstanie — dostaniesz wpis w `HUMAN_ACTION_REQUIRED.md
 
 ---
 
-## 3. Token Instagram Graph API — krok po kroku
+## 4. Token Instagram Graph API — krok po kroku
 
 To jedyna część, której nie da się zautomatyzować: wymaga logowania, 2FA i
 klikania w panelu Meta. Zrobisz to raz, token odnawiasz co ~60 dni.
@@ -104,23 +144,23 @@ klikania w panelu Meta. Zrobisz to raz, token odnawiasz co ~60 dni.
 pobiera opłat za Content Publishing API — jedyne ograniczenie to **50 postów
 na 24 h**, czego przy Reelsach nie dotkniesz.
 
-### 3.1. Konto musi być Business albo Creator
+### 4.1. Konto musi być Business albo Creator
 Instagram → Ustawienia → Typ konta → *Przełącz na konto profesjonalne*.
 Konto prywatne **nie zadziała** z API.
 
-### 3.2. Połącz Instagram ze stroną na Facebooku
+### 4.2. Połącz Instagram ze stroną na Facebooku
 API wymaga strony FB jako pośrednika.
 1. Utwórz stronę na https://facebook.com/pages/create (darmowe, może być pusta).
 2. Instagram → Ustawienia → *Udostępnianie w innych aplikacjach* → Facebook →
    połącz ze stroną.
 
-### 3.3. Utwórz aplikację w Meta for Developers
+### 4.3. Utwórz aplikację w Meta for Developers
 1. https://developers.facebook.com → *My Apps* → *Create App*.
 2. Typ: **Business**.
 3. W panelu aplikacji dodaj produkt **Instagram** → *API setup with Instagram
    login* (albo *Instagram Graph API*, zależnie od wariantu panelu).
 
-### 3.4. Wygeneruj token z właściwymi uprawnieniami
+### 4.4. Wygeneruj token z właściwymi uprawnieniami
 W *Graph API Explorer* (https://developers.facebook.com/tools/explorer):
 1. Wybierz swoją aplikację.
 2. Uprawnienia (zaznacz wszystkie):
@@ -141,7 +181,7 @@ curl -s "https://graph.facebook.com/v23.0/oauth/access_token\
 &fb_exchange_token=<KROTKI_TOKEN>"
 ```
 
-### 3.5. Znajdź swoje IG_USER_ID
+### 4.5. Znajdź swoje IG_USER_ID
 
 ```bash
 # 1) ID strony FB
@@ -154,7 +194,7 @@ curl -s "https://graph.facebook.com/v23.0/<PAGE_ID>\
 
 Wartość `instagram_business_account.id` to Twoje `IG_USER_ID`.
 
-### 3.6. Wpisz do `.env` w katalogu głównym repo
+### 4.6. Wpisz do `.env` w katalogu głównym repo
 
 ```bash
 IG_ACCESS_TOKEN=EAAG...        # długotrwały token (60 dni)
@@ -169,12 +209,12 @@ python3 content-pipeline/preflight.py
 ```
 
 > **Token wygasa po 60 dniach.** Kiedy krok 9 zacznie zwracać błąd
-> uwierzytelnienia, powtórz punkt 3.4 (wymiana na długotrwały) i podmień
+> uwierzytelnienia, powtórz punkt 4.4 (wymiana na długotrwały) i podmień
 > wartość w `.env`.
 
 ---
 
-## 4. Hosting wideo — brakujący element układanki
+## 5. Hosting wideo — brakujący element układanki
 
 Instagram Graph API **nie przyjmuje pliku**. Przyjmuje `video_url` i pobiera
 plik sam, więc gotowy `.mp4` musi być pod publicznym adresem HTTPS.
@@ -199,7 +239,7 @@ dopisuje do `HUMAN_ACTION_REQUIRED.md` ścieżkę pliku plus gotowy caption.
 
 ---
 
-## 5. Uruchomienie
+## 6. Uruchomienie
 
 Normalnie odpalasz `/content` w Claude Code i orkiestrator robi resztę.
 Każdy krok da się jednak uruchomić samodzielnie — przydaje się przy debugowaniu:
@@ -230,7 +270,7 @@ Każdy agent wypisuje na stdout **jeden obiekt JSON** — łatwo wpiąć w skryp
 
 ---
 
-## 6. Architektura
+## 7. Architektura
 
 ```
 .claude/commands/content.md            # orkiestrator (slash command)
@@ -246,9 +286,11 @@ content-pipeline/
 │   ├── ffmpeg.py           # binarki + probe (z fallbackiem bez ffprobe)
 │   ├── ig_api.py           # Instagram Graph API
 │   ├── hosting.py          # publiczny URL dla video_url
+│   ├── stock.py            # ujęcia z ludźmi (Pexels/Pixabay Videos)
 │   └── db.py               # SQLite: posts + metrics
 ├── agents/                 # 01…10, każdy: --run-dir, JSON na stdout
 ├── remotion/               # projekt Remotion (odseparowany od Next.js w root)
+│   └── public/<run-id>/    # pobrane ujęcia — Remotion serwuje tylko z public/
 ├── assets/music/           # muzyka pobrana ręcznie
 ├── output/                 # gotowe .mp4 + .jpg
 ├── logs/<TS>/              # artefakty runu
@@ -266,7 +308,7 @@ testowalne, uruchamialne z crona bez modelu).
 | 1 | researcher | Google Trends RSS + WebSearch | `trends.json` → `brief.json` |
 | 2 | scriptwriter | LLM + walidator | `brief.json` → `script.json` |
 | 3 | voice-generator | edge-tts → Piper → espeak-ng | `script.json` → `voice.mp3` + timestampy |
-| 4 | visual-builder | Remotion | `script.json` → `visuals.mp4` 1080×1920 |
+| 4 | visual-builder | Remotion + Pexels/Pixabay Videos | `script.json` → `visuals.mp4` 1080×1920 |
 | 5 | caption-burner | faster-whisper + ffmpeg/libass | → `captioned.mp4` |
 | 6 | audio-mixer | ffmpeg sidechaincompress | → `final.mp4` |
 | 7 | thumbnail-generator | Remotion Still | → `thumbnail.jpg` |
@@ -281,7 +323,7 @@ zasięg. Im więcej opublikowanych Reelsów, tym lepszy research.
 
 ---
 
-## 7. Konfiguracja
+## 8. Konfiguracja
 
 ```bash
 cp content-pipeline/config.example.json content-pipeline/config.json
@@ -305,7 +347,7 @@ Kolory napisów są w formacie ASS `&HAABBGGRR` — **odwrotnie niż HTML**.
 
 ---
 
-## 8. Cron — codzienny Reels
+## 9. Cron — codzienny Reels
 
 Kroki 1–8 da się zautomatyzować; publikacja świadomie zostaje przy człowieku.
 
@@ -319,7 +361,7 @@ Kroki 1–8 da się zautomatyzować; publikacja świadomie zostaje przy człowie
 
 ---
 
-## 9. Rozwiązywanie problemów
+## 10. Rozwiązywanie problemów
 
 | Objaw | Przyczyna | Naprawa |
 |---|---|---|
@@ -331,20 +373,27 @@ Kroki 1–8 da się zautomatyzować; publikacja świadomie zostaje przy człowie
 | Napisy lekko się rozjeżdżają | brak Whispera → czasy szacowane | sprawdź `timing_quality` w `captions.json`; `pip install faster-whisper` |
 | Krok 4 pada na `npm install` | brak Node 18+ | zainstaluj Node LTS |
 | Whisper mieli w nieskończoność | model `small` na słabym CPU | `"whisper_model": "tiny"` w `config.json` |
-| `Graph API 190` | token wygasł | powtórz punkt 3.4 |
-| `Graph API 9004` | `video_url` niedostępny publicznie | sprawdź backend hostingu (rozdział 4) |
+| `Graph API 190` | token wygasł | powtórz punkt 4.4 |
+| `Graph API 9004` | `video_url` niedostępny publicznie | sprawdź backend hostingu (rozdział 5) |
 | Kontener utknął na `IN_PROGRESS` | Meta przetwarza wideo | to normalne, do kilku minut; timeout to 7 min |
 | Publikacja przechodzi w `manual` | brak tokenu albo hostingu | przeczytaj `reasons` w `publish.json` |
 
 ---
 
-## 10. Czego ten pipeline NIE robi
+## 11. Czego ten pipeline NIE robi
 
 Uczciwa lista ograniczeń:
 
 - **Nie ocenia, czy wideo dobrze wygląda.** Krok 8 sprawdza metadane
   (proporcje, długość, kodeki, rozmiar) — nie treść obrazu. Obejrzenie pliku
-  przed akceptacją należy do Ciebie.
+  przed akceptacją należy do Ciebie. Dotyczy to zwłaszcza ujęć stockowych:
+  pipeline nie wie, czy pobrany klip pasuje do treści sceny.
+- **Ludzie w kadrze to stock, nie Ty.** Nie ma tu awatara AI mówiącego do
+  kamery i nie da się go dorobić za darmo: HeyGen/Synthesia/D-ID to płatne
+  subskrypcje, a open-source'owy lipsync (SadTalker, Wav2Lip) wymaga GPU i daje
+  jakość nie do publikacji. Jeśli chcesz własną twarz, nagraj hook telefonem i
+  podstaw plik ręcznie (`visual.clip` wskazujące plik w `remotion/public/`
+  jest respektowane i nic nie nadpisuje).
 - **Nie gwarantuje zasięgu.** Żaden pipeline tego nie robi.
 - **Ayrshare nie jest tu darmową opcją.** Darmowy plan Ayrshare obejmuje
   wyłącznie pojedyncze zdjęcia; publikowanie wideo zaczyna się od planu
@@ -355,7 +404,7 @@ Uczciwa lista ograniczeń:
   odświeżanie wymagałoby przechowywania `APP_SECRET`, czego świadomie unikamy.
 - **Pollinations.ai jest dodatkiem, nie fundamentem.** Darmowe API bez SLA —
   gdy nie odpowie, scena degraduje się do gradientu i pipeline leci dalej.
-- **Muzyka nie jest pobierana automatycznie** — patrz rozdział 2.
+- **Muzyka nie jest pobierana automatycznie** — patrz rozdział 3.
 - **Fallbacki degradują jakość i mówią o tym wprost.** Gdy edge-tts i Piper są
   niedostępne, lektora robi `espeak-ng` (`voice.json` → `quality:
   "placeholder"`). Gdy nie ma Whispera ani znaczników z TTS, czasy napisów są

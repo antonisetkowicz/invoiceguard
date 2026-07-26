@@ -30,7 +30,9 @@ MAX_TOTAL_S = 88.0          # zostawiamy 2 s marginesu do twardych 90 s API
 MIN_TOTAL_S = 8.0
 MAX_WORDS_PER_60S = 150.0
 MAX_HOOK_S = 3.0
-VISUAL_KINDS = {"text", "gradient", "shapes", "counter", "list", "quote", "image"}
+VISUAL_KINDS = {"footage", "text", "gradient", "shapes", "counter", "list",
+                "quote", "image"}
+MIN_FOOTAGE_SHARE = 0.4   # poniżej tego Reels wygląda jak prezentacja, nie jak Reels
 HOOK_PATTERN = re.compile(r"(\?|\d|nikt|nigdy|przesta|błąd|blad|prawda|sekret|"
                           r"stop|myślisz|myslisz|dlaczego|jak\b)", re.IGNORECASE)
 
@@ -64,6 +66,15 @@ def validate(script: dict, cfg: dict) -> tuple[list[str], dict]:
         elif visual["kind"] not in VISUAL_KINDS:
             problems.append(f"{label}: `visual.kind`='{visual['kind']}' spoza "
                             f"{sorted(VISUAL_KINDS)}")
+        elif visual["kind"] == "footage":
+            query = (visual.get("query") or "").strip()
+            if not query:
+                problems.append(f"{label}: `footage` wymaga `visual.query` "
+                                f"(opis ujęcia po angielsku)")
+            elif len(query.split()) < 3:
+                problems.append(f"{label}: `query`='{query}' jest za ogólne — "
+                                f"opisz konkretną scenę z człowiekiem "
+                                f"(4–8 słów po angielsku)")
 
         words = word_count(text)
         total_words += words
@@ -122,8 +133,20 @@ def validate(script: dict, cfg: dict) -> tuple[list[str], dict]:
         if bad:
             problems.append(f"hashtagi bez prefiksu #: {bad[:5]}")
 
+    # udział ujęć z ludźmi — ostrzeżenie, nie błąd twardy
+    footage_count = sum(1 for s in scenes
+                        if (s.get("visual") or {}).get("kind") == "footage")
+    footage_share = footage_count / len(scenes)
+    if footage_share < MIN_FOOTAGE_SHARE:
+        problems.append(
+            f"tylko {footage_count}/{len(scenes)} scen to `footage` "
+            f"({footage_share:.0%}) — Reels z samych plansz tekstowych wypada "
+            f"jak prezentacja; celuj w min. {MIN_FOOTAGE_SHARE:.0%} ujęć z ludźmi")
+
     stats = {
         "scenes": len(scenes),
+        "footage_scenes": footage_count,
+        "footage_share": round(footage_share, 2),
         "total_duration_s": round(total_s, 2),
         "total_words": total_words,
         "words_per_60s": round(pace, 1),

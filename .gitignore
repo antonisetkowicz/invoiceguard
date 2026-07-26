@@ -33,3 +33,6 @@ dist/
 !/content-pipeline/assets/music/README.md
 # Lokalne nadpisanie konfiguracji
 /content-pipeline/config.json
+# Pobrane ujęcia stockowe podawane do Remotion przez staticFile() — ciężkie i efemeryczne
+/content-pipeline/remotion/public/*
+!/content-pipeline/remotion/public/.gitkeep

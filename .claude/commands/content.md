@@ -60,8 +60,13 @@ W promptach subagentów 1b i 2 podaj: `RUN_DIR=<ścieżka>`, temat od użytkowni
    Ponów RAZ, jeśli błąd wygląda na przejściowy (sieć, timeout). Jeśli dalej
    pada — **STOP**, pokaż użytkownikowi `error` i `hint` ze stdout.
 3. Błąd w kroku **7** (miniatura) → nie blokuj, idź dalej, odnotuj degradację.
-4. Krok 4 z tłami: dodaj `--images` tylko jeśli scenariusz faktycznie używa
-   `visual.kind == "image"`.
+4. Krok 4 sam pobiera ujęcia z ludźmi dla scen `visual.kind == "footage"`
+   (Pexels/Pixabay, darmowe klucze). Bez `PEXELS_API_KEY`/`PIXABAY_API_KEY`
+   sceny degradują się do gradientów i powstaje wpis w
+   `HUMAN_ACTION_REQUIRED.md` — **to nie jest błąd kroku**, ale zaraportuj to
+   wprost, bo Reels bez ludzi wygląda jak prezentacja.
+   Flagę `--images` (Pollinations.ai) dodaj tylko jeśli scenariusz faktycznie
+   używa `visual.kind == "image"`.
 5. Jeśli `HUMAN_ACTION_REQUIRED.md` urósł — zanotuj, ale **nie przerywaj**.
 
 ### Flagi opcjonalne
@@ -164,8 +169,13 @@ Na koniec KAŻDEGO wywołania `/content`, niezależnie od wyniku:
 
 ## Zasady twarde
 - **Tylko darmowe narzędzia.** edge-tts, Whisper, Remotion, ffmpeg, Instagram
-  Graph API, Pollinations.ai — wszystko bez opłat i bez karty. Ayrshare NIE
-  jest darmowe dla wideo; nie proponuj go jako ścieżki domyślnej.
+  Graph API, Pexels/Pixabay Videos, Pollinations.ai — wszystko bez opłat i bez
+  karty. Ayrshare NIE jest darmowe dla wideo; nie proponuj go jako ścieżki
+  domyślnej. Awatary AI mówiące do kamery (HeyGen/Synthesia/D-ID) też są
+  płatne — nie proponuj ich jako rozwiązania „z ludźmi".
+- **Ujęcia z ludźmi to stock, nie użytkownik.** Nigdy nie sugeruj w scenariuszu
+  ani w raporcie, że osoba w kadrze mówi te słowa, jest klientem albo poleca
+  produkt — licencje Pexels/Pixabay tego zabraniają, a widz to wyczuwa.
 - **Nigdy nie publikuj bez zgody człowieka.** Jedyne wyjście z kroku 8 to
   `--approve` wpisane przez użytkownika.
 - Sekrety wyłącznie z `.env` (`IG_ACCESS_TOKEN`, `IG_USER_ID`) — nigdy nie

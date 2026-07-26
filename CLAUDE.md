@@ -125,9 +125,24 @@ Wyłącznie darmowe narzędzia, bez karty i bez subskrypcji.
   krok 1 czyta z niej `top_performers` i karmi nimi researchera.
 
 ### Stack (wszystko darmowe)
-edge-tts (lektor), Remotion (animacje 1080×1920), faster-whisper (transkrypcja),
-ffmpeg + libass (napisy słowo-po-słowie), ffmpeg sidechaincompress (ducking),
-Instagram Graph API (publikacja + insights), Pollinations.ai (opcjonalne tła).
+edge-tts (lektor), **Pexels/Pixabay Videos (ujęcia z prawdziwymi ludźmi w tle —
+domyślny wygląd Reelsa)**, Remotion (animacje i kompozycja 1080×1920),
+faster-whisper (transkrypcja), ffmpeg + libass (napisy słowo-po-słowie),
+ffmpeg sidechaincompress (ducking), Instagram Graph API (publikacja + insights),
+Pollinations.ai (opcjonalne tła).
+
+### Ujęcia z ludźmi (`visual.kind: "footage"`)
+Domyślny format to „faceless reels": stockowe ujęcie człowieka w tle + lektor +
+napisy. Scriptwriter celuje w 60–75% scen jako `footage` i nadaje każdej
+`visual.query` **po angielsku** (banki wideo nie mają polskich opisów).
+Krok 4 wybiera pionowy klip ≥1080 px, pobiera go do
+`remotion/public/<run-id>/` i podaje przez `staticFile()` — Remotion nie
+serwuje plików spoza `public/`. Klucze `PEXELS_API_KEY`/`PIXABAY_API_KEY` są
+darmowe i bez karty; ich brak degraduje sceny do gradientów + eskalacja.
+Jeśli `visual.clip` jest ustawione ręcznie, krok 4 tego nie nadpisuje — tak
+podstawia się własne nagranie (np. hook nakręcony telefonem).
+**Awatary AI mówiące do kamery nie mają darmowej ścieżki** (HeyGen/Synthesia =
+subskrypcja, SadTalker/Wav2Lip = GPU i zła jakość) — nie proponuj ich.
 
 ### Zasady twarde
 - **Nigdy nie publikuj bez zgody człowieka.** Krok 9 odmawia startu, dopóki

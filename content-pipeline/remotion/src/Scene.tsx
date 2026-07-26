@@ -2,8 +2,11 @@ import React from "react";
 import {
   AbsoluteFill,
   Img,
+  Loop,
+  OffthreadVideo,
   interpolate,
   spring,
+  staticFile,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
@@ -60,6 +63,37 @@ const Headline: React.FC<{
       {text}
     </div>
   );
+};
+
+/**
+ * Ujęcie stockowe w tle. Klip często jest krótszy niż scena — wtedy zapętlamy
+ * go komponentem <Loop>, bo OffthreadVideo nie ma własnego zapętlania i po
+ * końcu materiału pokazywałby czarne klatki.
+ */
+const Footage: React.FC<{
+  clip: string;
+  clipDurationS?: number;
+  durationInFrames: number;
+  scale: number;
+}> = ({ clip, clipDurationS, durationInFrames, scale }) => {
+  const { fps } = useVideoConfig();
+  const style: React.CSSProperties = {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    transform: `scale(${scale})`,
+  };
+  const video = <OffthreadVideo src={staticFile(clip)} muted style={style} />;
+
+  // -2 klatki zapasu: ostatnia klatka klipu bywa uszkodzona po transkodowaniu
+  const clipFrames = clipDurationS
+    ? Math.max(1, Math.floor(clipDurationS * fps) - 2)
+    : null;
+
+  if (clipFrames && clipFrames < durationInFrames) {
+    return <Loop durationInFrames={clipFrames}>{video}</Loop>;
+  }
+  return video;
 };
 
 const Shapes: React.FC<{ theme: Theme }> = ({ theme }) => {
@@ -228,10 +262,23 @@ export const SceneView: React.FC<{
 
   return (
     <AbsoluteFill style={{ background: gradient(colors), overflow: "hidden" }}>
+      {/* Ujęcie stockowe z ludźmi. Klip bywa krótszy niż scena — `loop`
+          domyka lukę zamiast pokazywać czarną klatkę. */}
+      {kind === "footage" && scene.visual.clip ? (
+        <AbsoluteFill>
+          <Footage
+            clip={scene.visual.clip}
+            clipDurationS={scene.visual.clipDurationS}
+            durationInFrames={durationInFrames}
+            scale={scale}
+          />
+        </AbsoluteFill>
+      ) : null}
+
       {kind === "image" && scene.visual.src ? (
         <AbsoluteFill>
           <Img
-            src={scene.visual.src}
+            src={staticFile(scene.visual.src)}
             style={{
               width: "100%",
               height: "100%",
@@ -245,11 +292,14 @@ export const SceneView: React.FC<{
 
       {kind === "shapes" ? <Shapes theme={theme} /> : null}
 
-      {/* Przyciemnienie pod napisami wypalanymi później przez ffmpeg */}
+      {/* Przyciemnienie: pod ujęciem z ludźmi musi być mocniejsze, inaczej
+          biały tekst ginie na jasnych kadrach. */}
       <AbsoluteFill
         style={{
           background:
-            "linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%)",
+            kind === "footage" && scene.visual.clip
+              ? `linear-gradient(to bottom, rgba(0,0,0,${(scene.visual.dim ?? 0.45) * 0.9}) 0%, rgba(0,0,0,${scene.visual.dim ?? 0.45}) 45%, rgba(0,0,0,${Math.min(1, (scene.visual.dim ?? 0.45) + 0.25)}) 100%)`
+              : "linear-gradient(to bottom, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,0.55) 100%)",
         }}
       />
 
@@ -267,7 +317,13 @@ export const SceneView: React.FC<{
           <ListVisual scene={scene} theme={theme} durationInFrames={durationInFrames} />
         ) : kind === "quote" ? (
           <Quote scene={scene} theme={theme} />
-        ) : kind === "gradient" ? null : (
+        ) : kind === "gradient" ? null : kind === "footage" ? (
+          /* Przy ujęciu z ludźmi headline jest opcjonalny i mniejszy —
+             gwiazdą sceny jest obraz, a nie napis. */
+          scene.visual.headline ? (
+            <Headline text={scene.visual.headline} theme={theme} size={76} />
+          ) : null
+        ) : (
           <Headline text={scene.visual.headline ?? scene.text} theme={theme} />
         )}
       </AbsoluteFill>

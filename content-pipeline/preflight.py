@@ -104,6 +104,21 @@ def check_music() -> dict:
             "fix": "pobierz 3–5 utworów z YouTube Audio Library lub pixabay.com/music (darmowe)"}
 
 
+def check_stock_footage() -> dict:
+    """Ujęcia z ludźmi — bez klucza sceny `footage` degradują do gradientów."""
+    available = [name for name, key in
+                 (("Pexels", "PEXELS_API_KEY"), ("Pixabay", "PIXABAY_API_KEY"))
+                 if env(key)]
+    if available:
+        return {"name": "Ujęcia z ludźmi (stock wideo)", "status": OK,
+                "detail": " + ".join(available), "fix": ""}
+    return {"name": "Ujęcia z ludźmi (stock wideo)", "status": WARN,
+            "detail": "brak PEXELS_API_KEY/PIXABAY_API_KEY — Reels wyjdzie na "
+                      "samych gradientach, bez ludzi",
+            "fix": "darmowy klucz bez karty: https://www.pexels.com/api/ "
+                   "(+ opcjonalnie https://pixabay.com/api/docs/)"}
+
+
 def check_instagram() -> dict:
     token, user = env("IG_ACCESS_TOKEN"), env("IG_USER_ID")
     if not token or not user:
@@ -159,8 +174,8 @@ def main() -> None:
         install_missing()
 
     checks = [check_python(), check_node(), check_ffmpeg(), check_ffprobe(),
-              *check_py_packages(), check_remotion(), check_music(),
-              check_instagram(), check_hosting()]
+              *check_py_packages(), check_remotion(), check_stock_footage(),
+              check_music(), check_instagram(), check_hosting()]
 
     blocking = [c for c in checks if c["status"] == ERR]
     if args.json:

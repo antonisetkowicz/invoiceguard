@@ -1,4 +1,5 @@
 export type VisualKind =
+  | "footage"
   | "text"
   | "gradient"
   | "shapes"
@@ -20,8 +21,22 @@ export type Scene = {
     from?: number;
     to?: number;
     suffix?: string;
-    /** Dla kind="image" — URL (np. darmowe Pollinations.ai) albo lokalny plik. */
+    /** Dla kind="image" — nazwa pliku w remotion/public/ (staticFile). */
     src?: string;
+    /**
+     * Dla kind="footage" — nazwa pobranego klipu w remotion/public/
+     * (ujęcie stockowe z ludźmi, Pexels/Pixabay). Pusty = degradacja do gradientu.
+     */
+    clip?: string;
+    /**
+     * Długość pobranego klipu w sekundach. Gdy klip jest krótszy niż scena,
+     * render zapętla go zamiast pokazywać czarne klatki.
+     */
+    clipDurationS?: number;
+    /** Zapytanie do banku wideo — używane przez krok 4, nie przez render. */
+    query?: string;
+    /** Przyciemnienie ujęcia pod tekst, 0–1 (domyślnie 0.45). */
+    dim?: number;
     /** Nadpisanie palety dla tej sceny. */
     colors?: [string, string];
   };
