@@ -13,6 +13,41 @@ services:
         generateValue: true
       - key: NEXT_PUBLIC_APP_URL
         value: https://invoiceguard.onrender.com
+      # SiteAudit — sekrety ustaw w panelu Render (sync: false = nie trzymamy ich w repo)
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: AUDIT_FROM_EMAIL
+        sync: false
+
+  # Silnik audytów. Osobny proces, bo jeden audyt trwa 40–150 s.
+  # WAŻNE: worker i web muszą widzieć TĘ SAMĄ bazę — patrz README.audyt.md,
+  # sekcja „Wdrożenie". Przy dwóch usługach SQLite nie wystarczy.
+  - type: worker
+    name: invoiceguard-audit-worker
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile.worker
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: invoiceguard-db
+          property: connectionString
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://invoiceguard.onrender.com
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: AUDIT_FROM_EMAIL
+        sync: false
+      - key: PSI_API_KEY
+        sync: false
 
 databases:
   - name: invoiceguard-db
