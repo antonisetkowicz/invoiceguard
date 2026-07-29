@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -53,6 +53,97 @@ model Invoice {
   @@index([vendorName])
   @@index([invoiceNumber])
   @@index([amount])
+}
+
+// ---------------------------------------------------------------------------
+// SiteAudit — self-serve audyt strony WWW (patrz ARCHITECTURE.audyt.md)
+// ---------------------------------------------------------------------------
+
+model AuditOrder {
+  id                String   @id @default(cuid())
+  publicToken       String   @unique
+  url               String
+  email             String
+  companyName       String?
+  goal              String?
+  tier              String   @default("free")
+  amountGrosz       Int      @default(0)
+  currency          String   @default("PLN")
+  paymentStatus     String   @default("none")
+  stripeSessionId   String?
+  stripePaymentId   String?
+  consentMarketing  Boolean  @default(false)
+  clientIp          String?
+  paidAt            DateTime?
+  reportSentAt      DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  runs              AuditRun[]
+
+  @@index([email])
+  @@index([clientIp])
+  @@index([stripeSessionId])
+}
+
+model AuditRun {
+  id             String     @id @default(cuid())
+  orderId        String
+  order          AuditOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  tier           String
+  status         String     @default("queued")
+  stage          String     @default("queued")
+  progress       Int        @default(0)
+  attempts       Int        @default(0)
+  error          String?
+  workerId       String?
+  claimedAt      DateTime?
+  heartbeatAt    DateTime?
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  scores         String?
+  scrapeData     String?
+  lighthouseData String?
+  analysis       String?
+  quoteGrosz     Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  findings       AuditFinding[]
+  events         AuditEvent[]
+
+  @@index([status, createdAt])
+  @@index([orderId])
+}
+
+model AuditFinding {
+  id             String   @id @default(cuid())
+  runId          String
+  run            AuditRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  area           String
+  severity       String
+  title          String
+  problem        String
+  recommendation String
+  evidence       String?
+  pageUrl        String?
+  impact         Int      @default(3)
+  effortHours    Float    @default(1)
+  priceGrosz     Int      @default(0)
+  sortIndex      Int      @default(0)
+  isTeaser       Boolean  @default(false)
+
+  @@index([runId])
+}
+
+model AuditEvent {
+  id        String   @id @default(cuid())
+  runId     String
+  run       AuditRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  stage     String
+  message   String
+  level     String   @default("info")
+  createdAt DateTime @default(now())
+
+  @@index([runId])
 }
 
 model LineItem {

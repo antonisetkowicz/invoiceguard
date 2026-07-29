@@ -1,0 +1,32 @@
+# Obraz dla silnika audytów (`npm run audit:worker`).
+#
+# Osobny od Dockerfile'a aplikacji, bo tamten produkuje build standalone Next.js:
+# w warstwie runtime nie ma ani `src/`, ani `tsx`, więc worker nie miałby czego
+# uruchomić. Ten obraz jest prostszy — kod TypeScript uruchamiany wprost przez tsx.
+
+FROM node:22-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY prisma ./prisma/
+RUN npm ci
+
+FROM node:22-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY package.json tsconfig.json tsconfig.worker.json ./
+COPY prisma ./prisma
+COPY src ./src
+COPY scripts ./scripts
+# Fonty raportu PDF — worker sam PDF-a nie renderuje, ale trzyma ten sam
+# katalog roboczy co aplikacja, więc ścieżki pozostają spójne.
+COPY public ./public
+
+RUN npx prisma generate
+
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 worker
+USER worker
+
+CMD ["npm", "run", "audit:worker"]
