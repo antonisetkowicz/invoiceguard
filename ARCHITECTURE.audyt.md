@@ -23,11 +23,12 @@ przestrzenią nazw `/audyt` i `/api/audit/*`, żeby nie mieszać się z panelem 
 | Płatności | Stripe Checkout, `mode=payment`, `price_data` inline | Zero produktów do klikania w panelu Stripe — cennik żyje w kodzie (`src/lib/audit/config.ts`). |
 | E-mail | Resend, **opcjonalny** | Bez `RESEND_API_KEY` link do raportu i tak jest pokazany na ekranie i zapisany w bazie — produkt działa bez skrzynki. |
 
-### Świadome ograniczenie
-Baza to **SQLite** (`prisma/schema.prisma`, `provider = "sqlite"` — mimo tego, co mówi
-`CLAUDE.md`). Kolejka jest napisana pod jednego workera (claim przez `updateMany` +
-warunek na statusie). Przy większym ruchu: zmień provider na Postgres i podnieś liczbę
-workerów — kod claimowania jest już atomowy i zadziała bez zmian.
+### Baza
+`prisma/schema.prisma` ma `provider = "postgresql"`, zgodnie z tym, co od początku
+zakładał `render.yaml` (web i worker dzielą jedną bazę Postgres przez `fromDatabase`).
+Kolejka jest napisana pod wielu workerów (claim przez `updateMany` + warunek na
+statusie, atomowy), więc podniesienie liczby workerów przy większym ruchu nie
+wymaga zmian w kodzie.
 
 ---
 

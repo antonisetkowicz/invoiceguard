@@ -105,27 +105,28 @@ Stawkę wyceny zmienisz zmienną `AUDIT_HOURLY_RATE_PLN` (bez zmian w kodzie).
 
 ## Wdrożenie
 
-### Rzecz, którą trzeba zdecydować najpierw: baza
+### Baza: Postgres wszędzie (rozstrzygnięte)
 
 Kolejka audytów żyje w bazie, więc **aplikacja i worker muszą widzieć tę samą bazę.**
+Na dwóch kontenerach (Render, Railway, Fly…) SQLite nie zadziała, bo każdy kontener ma
+własny dysk — dlatego `prisma/schema.prisma` używa teraz `provider = "postgresql"`,
+zgodnie z tym, co od początku zakładał `render.yaml` (`fromDatabase … connectionString`).
 
-- **Lokalnie / jeden host** — SQLite (obecna konfiguracja) wystarczy: oba procesy
-  czytają ten sam plik.
-- **Render, Railway, Fly, dwa kontenery** — SQLite **nie zadziała**, bo każdy kontener
-  ma własny dysk. Przełącz Prismę na Postgresa:
-  ```prisma
-  datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
-  }
-  ```
-  i uruchom `npm run db:push`. Kod claimowania zadań jest już atomowy — po zmianie na
-  Postgresa możesz też uruchomić kilka workerów naraz.
+Lokalnie potrzebujesz więc Postgresa zamiast pliku SQLite, np.:
 
-> Uwaga: `render.yaml` w tym repo od początku wskazuje na bazę Postgres
-> (`fromDatabase … connectionString`), a `prisma/schema.prisma` ma `provider = "sqlite"`.
-> To niespójność sprzed tej zmiany — przy wdrożeniu na Render trzeba ją rozstrzygnąć
-> zgodnie z powyższym.
+```bash
+docker run --name invoiceguard-db -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=invoiceguard -p 5432:5432 -d postgres:16
+```
+
+i w `.env`:
+
+```
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/invoiceguard"
+```
+
+Potem `npm run db:push`. Kod claimowania zadań jest już atomowy — na Postgresie możesz
+też uruchomić kilka workerów naraz.
 
 ### Render
 
