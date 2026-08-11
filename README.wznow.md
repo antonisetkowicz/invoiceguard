@@ -116,9 +116,14 @@ ostatnim zdarzeniem był komunikat o limicie i nie ma po nim żadnej pracy.
   `wznow-dyzur`), która ma dostęp do MCP `Claude_Code_Remote` i wykonuje cały
   pipeline.
 - Dlaczego przez sesję dyżurną, a nie świeżą sesję na każde odpalenie: Routine
-  tworzące świeżą sesję **nie dostają w tej organizacji konektorów MCP**, więc
-  taka sesja nie zobaczyłaby listy sesji ani nie mogłaby ich obudzić. Sesja
-  dyżurna te konektory ma.
+  zakładane z poziomu sesji (przez MCP) **nie dostają w tej organizacji
+  konektorów MCP** — parametr `connectors` jest zablokowany. Świeża sesja z
+  takiego Routine nie zobaczyłaby listy sesji ani nie mogłaby ich obudzić.
+  Sesja dyżurna, założona jak zwykła sesja, te konektory ma.
+- Jeśli wolisz świeżą sesję na każdy cykl: załóż Routine **ręcznie w panelu
+  Routines na claude.ai** — te zakładane przez UI mają zapisane konektory MCP
+  (widać to w `list_triggers` jako `mcp_connections`). Prompt do wklejenia
+  weź z pola `prompt` istniejącego `wznow-cykl-5h`.
 - Podgląd i zmiana: `mcp__Claude_Code_Remote__list_triggers` /
   `update_trigger`. Wyłączenie na chwilę: `update_trigger` z `enabled: false`.
 - Gdy sesja dyżurna zostanie zarchiwizowana: odtwórz ją (`create_session` z
