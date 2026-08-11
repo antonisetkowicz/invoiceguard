@@ -15,3 +15,7 @@ dist/
 
 # autoodpowiedzi — historia wiadomości (może zawierać treści prywatne, nie commitujemy)
 /message_log.json
+
+# monday — pamięć znalezisk raportu tygodniowego (efemeryczna, rośnie co tydzień)
+/monday_seen.json
+__pycache__/

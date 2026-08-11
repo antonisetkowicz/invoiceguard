@@ -1,9 +1,10 @@
 # CLAUDE.md — pamięć projektu
 
-To repo zawiera TRZY byty:
+To repo zawiera CZTERY byty:
 1. **InvoiceGuard** — istniejący SaaS (Next.js 15 + React 19 + TypeScript + Prisma + Postgres). Audyt faktur B2B / odzysk kosztów.
 2. **autobiznes** — autonomiczny system biznesowy zbudowany w `.claude/`, uruchamiany komendą `/autobiznes`.
 3. **autoodpowiedzi** — asystent automatycznego reagowania na e-mail/WhatsApp zbudowany w `.claude/`, uruchamiany komendą `/autoodpowiedzi`.
+4. **monday** — tygodniowy raport o nowych okazjach biznesowych w AI (filmy + strony), wysyłany mailem, uruchamiany komendą `/monday`.
 
 ---
 
@@ -93,6 +94,50 @@ tylko dla whitelisty + `sensitivity: low`. Szczegóły w
   `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_WHATSAPP_NUMBER`,
   `WHATSAPP_LOCAL_BRIDGE_URL`, `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`
   (współdzielone z autobiznes).
+
+---
+
+## monday — jak to działa
+
+Tygodniowy raport o nowych okazjach biznesowych w AI: ogląda (czyta
+transkrypcje/opisy) nowe filmy i czyta strony z ostatnich 7 dni, wybiera to,
+co da się realnie zrobić i sprzedać, i wysyła raport na skrzynkę właściciela.
+W poniedziałek o 7:00 mail sam otwiera się na komputerze użytkownika.
+
+### Uruchomienie
+- `/monday` — pełny przebieg + doręczenie.
+- `/monday --dry-run` — raport powstaje, nic nie wychodzi na skrzynkę.
+- `/monday zakres: 14d, tematy: <...>, do: <adres>` — zawężenia.
+
+### Architektura (ten sam wzorzec plikowy co autobiznes)
+- **Orkiestrator**: `.claude/commands/monday.md` — 5 subagentów 1→5
+  sekwencyjnie przez `Task`, kontrakt plikowy w `./run/<ISO-timestamp>/`:
+  1. `ai-video-scout` → `videos.json` (filmy z zakresu dat)
+  2. `ai-web-scout` → `articles.json` (modele/API, ceny, nisze, regulacje, dotacje)
+  3. `opportunity-analyst` → `opportunities.json` (ważony scoring + bramka realności + „pierwszy krok”)
+  4. `monday-reporter` → `monday/report.html` + `report.md` + `subject.txt`
+  5. `monday-mailer` → `monday/delivery.json` (SMTP albo draft Gmail + etykieta `monday`)
+- **Pamięć znalezisk**: `monday_seen.json` (root, **gitignorowany**) — żeby ten
+  sam film/artykuł nie wracał co tydzień.
+- **Harmonogram**: `scripts/monday/install-macos.sh` (launchd), `install-windows.ps1`
+  (Harmonogram zadań), `install-linux.sh` (cron) — otwieranie maila pon. 07:00
+  + opcjonalne generowanie pon. 05:30. Szczegóły: `README.monday.md`.
+
+### Zasady twarde
+- **Temat e-maila ZAWSZE zaczyna się od `[Monday]`** — po tym rozpoznaje go
+  filtr Gmaila (etykieta `monday`) i skrypt otwierający na komputerze.
+- Doręczenie: realna wysyłka SMTP (`scripts/monday/send_report.py`, hasło
+  aplikacji Google) gdy skonfigurowane; inaczej **draft w Gmailu** + wpis do
+  `HUMAN_ACTION_REQUIRED.md`. Nigdy nie zgaduj adresu odbiorcy.
+- Raport idzie **wyłącznie na adres właściciela** (`MONDAY_REPORT_TO`) — to nie
+  jest newsletter, zero CC/BCC, zero innych odbiorców.
+- Tylko darmowe narzędzia (WebSearch/WebFetch + SMTP/Gmail). Każda liczba ma
+  źródło; brak źródła = brak liczby; niepewne oznaczone „niepotwierdzone”.
+- Chudy tydzień opisujemy wprost — nigdy nie dopychamy raportu wypełniaczem
+  ani starymi tematami.
+- Sekrety tylko z `.env`: `MONDAY_REPORT_TO`, `MONDAY_SMTP_USER`,
+  `MONDAY_SMTP_PASS`, opcjonalnie `MONDAY_SMTP_HOST`/`MONDAY_SMTP_PORT`/
+  `MONDAY_FROM_NAME`.
 
 ---
 
