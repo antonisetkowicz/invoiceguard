@@ -126,6 +126,15 @@ Pełna dokumentacja: `README.wznow.md`.
   `sessions.json`, `projects.json`, `SESSIONS.md`, `resume-report.json`,
   `resume-log.json` (append-only rejestr prób).
 
+### Instalacja globalna (dostępność w KAŻDEJ konwersacji)
+`node scripts/sessions/install-global.mjs` (jednorazowo, na komputerze użytkownika):
+kopiuje komendę do `~/.claude/commands/wznow.md`, subagentów do `~/.claude/agents/`,
+silnik do `~/.claude/wznow/` (z przepisaniem ścieżek na globalne), zakłada
+harmonogram co 5h (launchd `com.wznow.cykl5h` na macOS, cron na Linuksie) i
+zostawia stan w `~/.claude/session-state/`. Konfiguracji użytkownika NIGDY nie
+nadpisuje. Deinstalacja: `node ~/.claude/wznow/install-global.mjs --uninstall`.
+Skrypty same wykrywają kontekst (repo vs `~/.claude/`), można wymusić `WZNOW_HOME`.
+
 ### Harmonogram
 - **Chmura**: Routine `wznow-cykl-5h` (`0 */5 * * *`) budzi **sesję dyżurną**
   („Dyżur /wznow", tag `wznow-dyzur`), która ma konektory MCP i robi cały

@@ -12,11 +12,37 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import readline from 'node:readline';
+import { fileURLToPath } from 'node:url';
 
 export const HOME = os.homedir();
 export const PROJECTS_DIR = process.env.CLAUDE_PROJECTS_DIR || path.join(HOME, '.claude', 'projects');
-export const REPO_ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', '..');
-export const STATE_DIR = process.env.WZNOW_STATE_DIR || path.join(REPO_ROOT, '.claude', 'session-state');
+export const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+export const REPO_ROOT = path.resolve(SCRIPT_DIR, '..', '..');
+export const GLOBAL_HOME = path.join(HOME, '.claude');
+
+/**
+ * Gdzie szukać konfiguracji i stanu. Pierwszy katalog z listy jest „domowy" —
+ * to w nim lądują pliki stanu. Dzięki temu ten sam kod działa i w repo
+ * (`<repo>/.claude/`), i po instalacji globalnej (`~/.claude/`, skrypty w
+ * `~/.claude/wznow/`), bez żadnej konfiguracji.
+ */
+export const CONFIG_DIRS = [
+  process.env.WZNOW_HOME,
+  SCRIPT_DIR.startsWith(GLOBAL_HOME) ? GLOBAL_HOME : null,
+  path.join(REPO_ROOT, '.claude'),
+  GLOBAL_HOME,
+].filter(Boolean).filter((d, i, arr) => arr.indexOf(d) === i);
+
+/** Pierwszy istniejący plik o tej nazwie w CONFIG_DIRS (albo null). */
+export function findConfigFile(name) {
+  for (const dir of CONFIG_DIRS) {
+    const file = path.join(dir, name);
+    if (fs.existsSync(file)) return file;
+  }
+  return null;
+}
+
+export const STATE_DIR = process.env.WZNOW_STATE_DIR || path.join(CONFIG_DIRS[0], 'session-state');
 
 /** Okno limitu Claude odnawia się co 5 godzin — fallback gdy transkrypt nie podał czasu resetu. */
 export const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
@@ -331,8 +357,8 @@ export const DEFAULT_RULES = [
 ];
 
 export function loadRules() {
-  const file = path.join(REPO_ROOT, '.claude', 'session-rules.json');
-  if (!fs.existsSync(file)) return DEFAULT_RULES;
+  const file = findConfigFile('session-rules.json');
+  if (!file) return DEFAULT_RULES;
   try {
     const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
     if (Array.isArray(parsed?.reguly) && parsed.reguly.length) return parsed.reguly;
@@ -556,8 +582,8 @@ export function readJson(file, fallback) {
  * w sesji lokalnej i w świeżej sesji zdalnej odpalonej przez Routine.
  */
 export function loadConfig() {
-  const file = path.join(REPO_ROOT, '.claude', 'wznow.config.json');
-  const cfg = readJson(file, {}) || {};
+  const file = findConfigFile('wznow.config.json');
+  const cfg = (file ? readJson(file, {}) : {}) || {};
   // klucze zaczynające się od "//" to komentarze w JSON-ie
   return Object.fromEntries(Object.entries(cfg).filter(([k]) => !k.startsWith('//')));
 }
@@ -566,8 +592,18 @@ export function loadConfig() {
  * Wczytuje `.env` z korzenia repo do process.env (bez nadpisywania istniejących).
  * Repo trzyma sekrety wyłącznie w .env — skrypty czytają je same, bez zależności.
  */
-export function loadEnv(file = path.join(REPO_ROOT, '.env')) {
-  if (!fs.existsSync(file)) return {};
+export function loadEnv(file) {
+  if (!file) {
+    // po instalacji globalnej .env leży obok skryptów (~/.claude/wznow/.env),
+    // w repo — w jego korzeniu
+    file = [
+      process.env.WZNOW_ENV_FILE,
+      path.join(SCRIPT_DIR, '.env'),
+      path.join(REPO_ROOT, '.env'),
+      path.join(GLOBAL_HOME, '.env'),
+    ].filter(Boolean).find((f) => fs.existsSync(f));
+  }
+  if (!file || !fs.existsSync(file)) return {};
   const out = {};
   for (const raw of fs.readFileSync(file, 'utf8').split('\n')) {
     const line = raw.trim();

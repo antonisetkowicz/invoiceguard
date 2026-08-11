@@ -50,6 +50,48 @@ Routine „wznow-cykl-5h" (co 5h)
 
 ---
 
+## Instalacja globalna (każda konwersacja, bez otwartej sesji)
+
+Jednorazowo, z checkoutu repo na swoim komputerze:
+
+```bash
+node scripts/sessions/install-global.mjs      # instalacja + harmonogram co 5h
+node scripts/sessions/install-global.mjs --dry-run   # najpierw podgląd
+node scripts/sessions/install-global.mjs --no-cron   # bez harmonogramu
+node ~/.claude/wznow/install-global.mjs --uninstall  # odinstalowanie
+```
+
+Co się dzieje po instalacji:
+
+| element | gdzie ląduje | efekt |
+|---|---|---|
+| komenda `/wznow` | `~/.claude/commands/wznow.md` | działa w **każdej** konwersacji Claude Code na tym komputerze, w dowolnym projekcie |
+| subagenci | `~/.claude/agents/session-{scanner,resumer}.md` | jak wyżej |
+| silnik | `~/.claude/wznow/*.mjs` | niezależny od repo InvoiceGuard |
+| ustawienia | `~/.claude/wznow.config.json`, `~/.claude/session-rules.json` | **nie są nadpisywane** przy ponownej instalacji |
+| stan i raporty | `~/.claude/session-state/` | wspólne dla wszystkich projektów |
+| harmonogram | launchd `com.wznow.cykl5h` (macOS) albo cron (Linux) | cykl co 5h **chodzi w tle, nawet gdy nie masz otwartej żadnej sesji** |
+| log cyklu | `~/.claude/wznow/cykl.log` | rotowany przy 512 KB |
+
+Sprawdzenie, że harmonogram żyje:
+
+```bash
+launchctl list | grep com.wznow.cykl5h     # macOS
+crontab -l | grep wznow                    # Linux
+tail -20 ~/.claude/wznow/cykl.log
+```
+
+Instalator nadpisuje pliki komendy i agentów (żeby dało się aktualizować
+`git pull` + ponowna instalacja), ale **nigdy** nie rusza Twojego
+`wznow.config.json`, `session-rules.json` ani historii w `session-state/`.
+Na macOS launchd nadrabia przespane cykle po wybudzeniu komputera.
+
+Skrypty rozpoznają, gdzie działają: uruchomione z `~/.claude/wznow/` czytają
+konfigurację z `~/.claude/`, uruchomione z repo — z `<repo>/.claude/`. Można to
+wymusić zmienną `WZNOW_HOME`.
+
+---
+
 ## Uruchomienie
 
 ```bash
@@ -84,6 +126,7 @@ node scripts/sessions/selftest.mjs        # test detektorów limitu (31 asercji)
 | `scripts/sessions/scan.mjs` | skan → `sessions.json`, `projects.json`, `SESSIONS.md` |
 | `scripts/sessions/resume.mjs` | wznawianie sesji lokalnych + rejestr prób |
 | `scripts/sessions/selftest.mjs` | testy na syntetycznych transkryptach |
+| `scripts/sessions/install-global.mjs` | instalacja globalna (`~/.claude/`) + harmonogram co 5h |
 | `.claude/session-state/` | stan runtime (**gitignorowany** — zawiera prompty) |
 
 ---
@@ -130,20 +173,20 @@ ostatnim zdarzeniem był komunikat o limicie i nie ma po nim żadnej pracy.
   tagiem `wznow-dyzur`, branch z tym systemem) i wskaż nowy
   `persistent_session_id` w Routine.
 
-### Komputer lokalny (macOS) — cron
+### Komputer lokalny (macOS/Linux) — launchd albo cron
 
-Sesji lokalnych (`~/.claude/projects`) nie widać z chmury — ten sam system
-uruchamiasz u siebie cronem:
+Sesji lokalnych (`~/.claude/projects`) nie widać z chmury — na swoim komputerze
+uruchamia je harmonogram zakładany przez `install-global.mjs` (sekcja
+„Instalacja globalna" wyżej). Ręcznie, bez instalatora, wystarczy wpis crona:
 
 ```cron
 # co 5 godzin: skan + wznowienie sesji zatrzymanych przez limit
-0 */5 * * * cd ~/ścieżka/do/invoiceguard && \
-  /usr/bin/env node scripts/sessions/scan.mjs >/dev/null 2>&1 && \
-  /usr/bin/env node scripts/sessions/resume.mjs --apply >> ~/wznow-cron.log 2>&1
+0 */5 * * * /bin/sh $HOME/.claude/wznow/run-cycle.sh
 ```
 
-W cronie PATH bywa ubogi — ustaw `CLAUDE_BIN=/opt/homebrew/bin/claude` w `.env`,
-jeśli `claude` nie startuje.
+W cronie i launchd PATH bywa ubogi — jeśli `node` albo `claude` nie startują,
+ustaw `WZNOW_NODE=/opt/homebrew/bin/node` w środowisku i
+`CLAUDE_BIN=/opt/homebrew/bin/claude` w `~/.claude/wznow/.env`.
 
 ---
 

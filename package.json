@@ -15,7 +15,8 @@
     "wznow:scan": "node scripts/sessions/scan.mjs",
     "wznow:plan": "node scripts/sessions/resume.mjs",
     "wznow:resume": "node scripts/sessions/resume.mjs --apply",
-    "wznow:test": "node scripts/sessions/selftest.mjs"
+    "wznow:test": "node scripts/sessions/selftest.mjs",
+    "wznow:install": "node scripts/sessions/install-global.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
