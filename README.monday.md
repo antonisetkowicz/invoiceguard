@@ -114,9 +114,30 @@ otwiera też lokalną kopię `report.html`.
 
 | Opcja | Kiedy działa | Zaleta | Wada |
 |---|---|---|---|
-| **Routine w chmurze** (Claude Code on the web) | zawsze, komputer może być wyłączony | nic nie musi chodzić lokalnie | raport powstaje w sesji zdalnej |
-| **launchd/cron lokalnie** (pon. 05:30) | gdy komputer jest włączony/wybudzony | pełna kontrola, wszystko lokalnie | Mac musi wstać przed 5:30 |
+| **Routine w chmurze** (Claude Code on the web) | zawsze, komputer może być wyłączony | nic nie musi chodzić lokalnie | wymaga zmiennych środowiskowych SMTP (patrz niżej) |
+| **launchd/cron lokalnie** (pon. 05:30) | gdy komputer jest włączony/wybudzony | pełna kontrola, `.env` już masz | Mac musi wstać przed 5:30 |
 | **ręcznie** `/monday` | kiedy chcesz | zero harmonogramu | trzeba pamiętać |
+
+### Routine w chmurze — jedno „ale"
+
+Utworzona Routine `Monday — tygodniowy raport AI`
+(`trig_01VAvHScE2V2vwEioN7apuKe`) odpala się **w poniedziałki 05:30 czasu
+polskiego** (`30 3 * * 1` UTC — zimą wypada 04:30 lokalnie).
+
+Sesja z harmonogramu startuje ze **świeżego klona repo**, więc:
+- **nie ma pliku `.env`** (jest gitignorowany — i dobrze),
+- **nie ma konektora Gmail**, czyli nie ma fallbacku „draft".
+
+Żeby raport z chmury realnie wychodził, ustaw w **Environment variables**
+tego środowiska (panel Claude Code on the web → Environments):
+`MONDAY_REPORT_TO`, `MONDAY_SMTP_USER`, `MONDAY_SMTP_PASS`.
+`send_report.py` czyta zmienne środowiskowe **przed** `.env`, więc to
+wystarczy — nic w kodzie nie trzeba zmieniać.
+
+Dopóki tych zmiennych nie ma, Routine wygeneruje raport i **jawnie napisze,
+że nie miała czym go wysłać** (nie udaje wysyłki). Jeśli wolisz nie trzymać
+hasła aplikacji w chmurze — wyłącz Routine i zostaw generowanie lokalne
+(launchd/cron), gdzie `.env` już działa.
 
 Otwieranie maila o 7:00 jest **niezależne** od tego, kto raport wygenerował —
 skrypt po prostu otwiera skrzynkę.
