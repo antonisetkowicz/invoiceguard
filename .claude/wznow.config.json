@@ -1,0 +1,29 @@
+{
+  "//": "Polityka systemu /wznow (bez sekretów — te są w .env). Zmienne środowiskowe AUTORESUME_* nadpisują te wartości.",
+
+  "auto_resume_local": true,
+  "//auto_resume_local": "true = skrypt resume.mjs --apply naprawdę uruchamia `claude --resume` dla sesji lokalnych. false = tylko plan (dry-run).",
+
+  "auto_resume_remote": true,
+  "//auto_resume_remote": "true = komenda /wznow sama budzi zablokowane sesje zdalne (claude.ai/code) przez Routine one-shot. false = tylko raportuje.",
+
+  "max_attempts": 3,
+  "//max_attempts": "Ile razy wolno próbować wznowić TĘ SAMĄ sesję, zanim system przestanie (chroni przed pętlą wznawiania).",
+
+  "cooldown_min": 60,
+  "//cooldown_min": "Minimalny odstęp między próbami wznowienia tej samej sesji (minuty).",
+
+  "max_age_days": 7,
+  "//max_age_days": "Sesje bez aktywności dłużej niż tyle dni uznajemy za porzucone i nie wznawiamy.",
+
+  "max_per_run": 5,
+  "//max_per_run": "Ile sesji maksymalnie wznawiamy w jednym cyklu — reszta poczeka na następny (co 5h).",
+
+  "timeout_min": 30,
+  "//timeout_min": "Twardy limit czasu na jedno wznowienie sesji lokalnej (minuty).",
+
+  "exclude": [],
+  "//exclude": "Fragmenty ścieżek katalogów roboczych, których NIGDY nie wznawiamy, np. [\"/Users/ja/eksperymenty\"].",
+
+  "resume_prompt": "[auto-wznowienie /wznow] Limit się odnowił. Kontynuuj dokładnie od miejsca, w którym przerwałeś. Najpierw jednym zdaniem streść, na czym stanąłeś, potem dokończ zadanie. Jeśli zadanie było już skończone — napisz to i nic nie zmieniaj. Nie zaczynaj nowego zakresu prac na własną rękę."
+}

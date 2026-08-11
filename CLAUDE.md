@@ -1,9 +1,10 @@
 # CLAUDE.md — pamięć projektu
 
-To repo zawiera TRZY byty:
+To repo zawiera CZTERY byty:
 1. **InvoiceGuard** — istniejący SaaS (Next.js 15 + React 19 + TypeScript + Prisma + Postgres). Audyt faktur B2B / odzysk kosztów.
 2. **autobiznes** — autonomiczny system biznesowy zbudowany w `.claude/`, uruchamiany komendą `/autobiznes`.
 3. **autoodpowiedzi** — asystent automatycznego reagowania na e-mail/WhatsApp zbudowany w `.claude/`, uruchamiany komendą `/autoodpowiedzi`.
+4. **wznow** — auto-wznawianie sesji Claude Code zatrzymanych przez limit + kategoryzacja konwersacji wg projektu, uruchamiane komendą `/wznow` i cyklem co 5h.
 
 ---
 
@@ -93,6 +94,56 @@ tylko dla whitelisty + `sensitivity: low`. Szczegóły w
   `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_WHATSAPP_NUMBER`,
   `WHATSAPP_LOCAL_BRIDGE_URL`, `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`
   (współdzielone z autobiznes).
+
+---
+
+## wznow — jak to działa
+
+System, który **co 5 godzin** sprawdza, które sesje Claude Code zatrzymał limit,
+**wznawia je po odnowieniu limitu** i **kategoryzuje konwersacje wg projektu**.
+Pełna dokumentacja: `README.wznow.md`.
+
+### Uruchomienie
+- `/wznow` — pełny przebieg (skan + wznowienia + raport).
+- `/wznow --dry-run` — plan bez wznawiania. `/wznow --kategorie` — sam raport projektów.
+- Bez Claude'a: `node scripts/sessions/scan.mjs`, `node scripts/sessions/resume.mjs --apply`,
+  `node scripts/sessions/selftest.mjs` (testy detektorów limitu).
+
+### Architektura
+- **Orkiestrator**: `.claude/commands/wznow.md` → 2 subagenty: `session-scanner`
+  (inwentarz sesji lokalnych + zdalnych, tylko odczyt) → `session-resumer`
+  (wznowienia, budziki, eskalacje).
+- **Silnik**: `scripts/sessions/` — `lib.mjs` (parser transkryptów
+  `~/.claude/projects/**/*.jsonl`, detektory limitu, grupowanie wg projektu),
+  `scan.mjs`, `resume.mjs`, `selftest.mjs`. Czysty Node, zero zależności.
+- **Polityka**: `.claude/wznow.config.json` (commitowany, bez sekretów) —
+  `auto_resume_local`, `auto_resume_remote`, `max_attempts`, `cooldown_min`,
+  `max_age_days`, `max_per_run`, `exclude`, `resume_prompt`. Zmienne
+  `AUTORESUME_*` z `.env` nadpisują te wartości.
+- **Reguły kategoryzacji**: `.claude/session-rules.json` — edytowane WYŁĄCZNIE
+  ręcznie; wygrywa pierwsza pasująca reguła (wąskie kategorie wyżej niż `feature`).
+- **Stan**: `.claude/session-state/` (gitignorowany — zawiera fragmenty promptów):
+  `sessions.json`, `projects.json`, `SESSIONS.md`, `resume-report.json`,
+  `resume-log.json` (append-only rejestr prób).
+
+### Harmonogram
+- **Chmura**: Routine `wznow-cykl-5h` (`0 */5 * * *`) budzi **sesję dyżurną**
+  („Dyżur /wznow", tag `wznow-dyzur`), która ma konektory MCP i robi cały
+  pipeline. Świeża sesja per odpalenie NIE zadziała — Routine w tej organizacji
+  nie dostają konektorów MCP, więc nie zobaczyłyby listy sesji.
+- **Lokalnie (macOS)**: cron co 5h na `scan.mjs` + `resume.mjs --apply` — wpis
+  gotowy w `README.wznow.md`. Chmura nie widzi sesji lokalnych i odwrotnie.
+
+### Zasady twarde
+- Wznawiamy TYLKO limity odnawialne same z siebie (`five_hour`, `rate`). Limit
+  tygodniowy, limit wydatków i `worker_auth_expired` → `HUMAN_ACTION_REQUIRED.md`.
+- Sesja przerwana przez człowieka NIGDY nie jest wznawiana — tylko taka, gdzie
+  ostatnim zdarzeniem był komunikat o limicie i nie ma po nim żadnej pracy.
+- Bezpieczniki przed pętlą: `max_attempts` 3, `cooldown_min` 60, `max_per_run` 5,
+  `max_age_days` 7. `resume.mjs` bez `--apply` niczego nie uruchamia.
+- Prompt wznawiający pochodzi z configu i zabrania rozszerzania zakresu prac.
+- Nie kasujemy cudzych Routine — tylko własne `wznow-resume-*` / `wznow-wake-*`,
+  nigdy `wznow-cykl-5h`.
 
 ---
 
