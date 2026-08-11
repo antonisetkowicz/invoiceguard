@@ -111,8 +111,9 @@ ostatnim zdarzeniem był komunikat o limicie i nie ma po nim żadnej pracy.
 
 ### Chmura (claude.ai/code) — działa samo
 
-- Routine **`wznow-cykl-5h`** (`0 */5 * * *`) budzi **sesję dyżurną**
-  „Dyżur /wznow", która ma dostęp do MCP `Claude_Code_Remote` i wykonuje cały
+- Routine **`wznow-cykl-5h`** (`0 */5 * * *`, serwer zakotwicza minutę na
+  moment utworzenia) budzi **sesję dyżurną** „Dyżur /wznow" (tag
+  `wznow-dyzur`), która ma dostęp do MCP `Claude_Code_Remote` i wykonuje cały
   pipeline.
 - Dlaczego przez sesję dyżurną, a nie świeżą sesję na każde odpalenie: Routine
   tworzące świeżą sesję **nie dostają w tej organizacji konektorów MCP**, więc
@@ -167,6 +168,10 @@ zobaczy dużo sesji w koszu `inne`, tylko zaproponuje gotowy fragment JSON.
 - **Chmura nie widzi sesji lokalnych, a komputer nie widzi zdalnych.** To dwa
   osobne silniki tego samego systemu: cykl w chmurze pilnuje sesji
   claude.ai/code, cron na Macu pilnuje sesji z terminala.
+- **Nazwa serwera MCP bywa różna w różnych sesjach** — raz
+  `mcp__Claude_Code_Remote__*`, raz `mcp__claude-code-remote__*`. Agenci mają w
+  allowliście oba warianty i używają tego, który zastaną; brak obu = obsługa
+  tylko sesji lokalnych plus wpis w raporcie.
 - **Wykrywanie limitu opiera się na treści komunikatu.** Wzorce są w
   `LIMIT_PATTERNS` w `scripts/sessions/lib.mjs`. Jeśli Anthropic zmieni
   formułkę, dopisz wzorzec — `selftest.mjs` sprawdzi, że nic się nie rozjechało.

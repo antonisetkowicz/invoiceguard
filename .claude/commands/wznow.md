@@ -86,8 +86,9 @@ Wypisz użytkownikowi w czacie, po polsku:
 6. **Ścieżki plików**: `.claude/session-state/SESSIONS.md`, `sessions.json`,
    `projects.json`, `resume-actions.json`, `resume-log.json`.
 7. **Następny cykl**: kiedy wypada najbliższe uruchomienie Routine
-   `wznow-cykl-5h` (co 5h) — sprawdź `next_run_at` przez
-   `mcp__Claude_Code_Remote__list_triggers`. Jeśli tego Routine NIE MA,
+   `wznow-cykl-5h` (co 5h) — sprawdź `next_run_at` przez `list_triggers`
+   (narzędzie bywa nazwane `mcp__Claude_Code_Remote__list_triggers` albo
+   `mcp__claude-code-remote__list_triggers`). Jeśli tego Routine NIE MA,
    powiedz o tym wyraźnie i podaj gotowe wywołanie `create_trigger` z
    `cron_expression: "0 */5 * * *"` i `create_new_session_on_fire: true`.
 

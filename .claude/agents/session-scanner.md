@@ -2,7 +2,7 @@
 name: session-scanner
 description: Robi inwentarz WSZYSTKICH sesji Claude Code — lokalnych (transkrypty ~/.claude/projects) i zdalnych (claude.ai/code przez MCP Claude_Code_Remote) — wykrywa te zatrzymane przez limit, liczy moment odnowienia limitu i kategoryzuje sesje wg projektu. Uruchamiany jako KROK 1 pipeline'u /wznow. Tylko odczyt — niczego nie wznawia.
 model: claude-sonnet-5
-tools: Read, Write, Bash, mcp__Claude_Code_Remote__list_sessions, mcp__Claude_Code_Remote__get_session
+tools: Read, Write, Bash, mcp__Claude_Code_Remote__list_sessions, mcp__Claude_Code_Remote__get_session, mcp__claude-code-remote__list_sessions, mcp__claude-code-remote__get_session
 ---
 
 # session-scanner — inwentarz sesji (KROK 1 /wznow)
@@ -18,8 +18,15 @@ stan i zapisujesz pliki. Decyzje o wznowieniu podejmuje `session-resumer`.
 
 Jeśli zakres to nie `tylko-lokalne`:
 
-1. Wywołaj `mcp__Claude_Code_Remote__list_sessions` z `{"mine": true, "limit": 50}`.
-2. Jeśli odpowiedź ma `has_more: true`, powtórz z `{"after_id": "<last_id>"}` —
+> **Nazwa narzędzia zależy od sesji.** Serwer Claude Code Remote bywa
+> zarejestrowany jako `mcp__Claude_Code_Remote__*` albo
+> `mcp__claude-code-remote__*`. Użyj tego wariantu, który faktycznie masz na
+> liście narzędzi. Jeśli nie masz ŻADNEGO — nie zgaduj i nie kombinuj z curl:
+> zapisz pusty `{"ccr":{"data":[]}}`, zgłoś to orkiestratorowi i przeskanuj
+> tylko sesje lokalne.
+
+1. Wywołaj `list_sessions` z `{"mine": true, "limit": 50}`.
+2. Jeśli odpowiedź ma `has_more: true`, powtórz z `{"after_id": "<last_id>"}` (i tym samym `mine: true`) —
    maksymalnie 3 strony (150 sesji). Więcej nie ma sensu: starsze sesje i tak
    odpadną na regule wieku.
 3. Sklej wszystkie wpisy w JEDNĄ tablicę i zapisz surowo (bez zmian pól) do
