@@ -15,3 +15,6 @@ dist/
 
 # autoodpowiedzi — historia wiadomości (może zawierać treści prywatne, nie commitujemy)
 /message_log.json
+
+# notatki — dowiązanie do folderu z PDF-ami na Macu (treść prywatna, poza repo)
+/notatki

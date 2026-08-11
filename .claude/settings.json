@@ -29,7 +29,13 @@
       "Bash(git commit:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(bash scripts/notatki/:*)",
+      "Bash(osascript:*)",
+      "Bash(textutil:*)",
+      "Bash(shasum:*)",
+      "Bash(find:*)",
+      "Bash(ln -s:*)"
     ],
     "deny": [
       "Read(./.env)",

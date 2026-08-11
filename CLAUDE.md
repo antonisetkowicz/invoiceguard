@@ -1,9 +1,10 @@
 # CLAUDE.md — pamięć projektu
 
-To repo zawiera TRZY byty:
+To repo zawiera CZTERY byty:
 1. **InvoiceGuard** — istniejący SaaS (Next.js 15 + React 19 + TypeScript + Prisma + Postgres). Audyt faktur B2B / odzysk kosztów.
 2. **autobiznes** — autonomiczny system biznesowy zbudowany w `.claude/`, uruchamiany komendą `/autobiznes`.
 3. **autoodpowiedzi** — asystent automatycznego reagowania na e-mail/WhatsApp zbudowany w `.claude/`, uruchamiany komendą `/autoodpowiedzi`.
+4. **notatki** — pobieranie notatek z iCloud → PDF → automatyczne sortowanie folderu na Macu, uruchamiane komendą `/notatki`.
 
 ---
 
@@ -93,6 +94,54 @@ tylko dla whitelisty + `sensitivity: low`. Szczegóły w
   `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_WHATSAPP_NUMBER`,
   `WHATSAPP_LOCAL_BRIDGE_URL`, `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID`
   (współdzielone z autobiznes).
+
+---
+
+## notatki — jak to działa
+
+iCloud (Notes.app) → PDF → folder na Macu, który Claude sam sortuje i indeksuje.
+Cały łańcuch na wbudowanych narzędziach macOS — zero płatnych usług, zero brew.
+
+### Uruchomienie
+- `/notatki` — pełny przebieg (pobierz → PDF → posortuj → `INDEX.md` → raport).
+- `/notatki --setup` — jednorazowa konfiguracja; `--tylko-eksport`,
+  `--tylko-organizuj`, `--pelny`, `dni: <n>`, `--auto <minuty>`.
+- Szczegóły i rozwiązywanie problemów: `README.notatki.md`.
+
+### Architektura (dwie warstwy, celowo rozdzielone)
+- **Warstwa maszynowa** `scripts/notatki/` — deterministyczna, nie ocenia treści:
+  `export_icloud_notes.applescript` (Notes.app → HTML + `manifest.json` +
+  podglądy `.txt`) → `html2pdf.js` (JXA/AppKit: `NSAttributedString` →
+  `NSPrintOperation`, wielostronicowy PDF bez żadnych zależności) →
+  `sync.sh` (stan przyrostowy po SHA-256, raport `sync.json`).
+  Do tego `setup.sh`, `auto.sh`, `install_launchd.sh` (automat co N minut).
+- **Warstwa decyzyjna** — 2 subagenty w `.claude/agents/`, izolowane, komunikacja
+  przez pliki: `notes-organizer` (krok 3: klasyfikacja + `mv` + nazwy +
+  `klasyfikacja.json`) → `notes-librarian` (krok 4: `INDEX.md`, `katalog.json`,
+  duplikaty/sieroty, `raport.md`).
+- **Orkiestrator**: `.claude/commands/notatki.md`. `RUN_DIR=./run/<TS>/notatki/`.
+- **Folder docelowy** (`NOTATKI_ROOT`, domyślnie `~/Notatki-PDF`): `00-inbox`,
+  `10-projekty`, `20-klienci`, `30-finanse`, `40-pomysly`, `50-osobiste`,
+  `90-archiwum`, `95-nieposortowane`, `_zrodla/`, `_stan/`, `INDEX.md`.
+  Dostęp Claude'a: dowiązanie `./notatki` (gitignorowane) tworzone przez `setup.sh`.
+
+### Zasady twarde
+- **Tylko macOS.** iCloud Notes nie mają publicznego API — jedyna droga to lokalny
+  AppleScript do Notes.app. W sesji zdalnej/kontenerze preflight zwraca
+  `FAIL system=…` i pipeline STOP-uje; nie wolno tego obchodzić ani udawać sukcesu.
+- **Zero kasowania.** Agenci używają wyłącznie `mv`/`mkdir`; duplikaty są
+  raportowane, decyzję podejmuje człowiek. Żadnych ścieżek poza `NOTATKI_ROOT`.
+- **Źródło tylko do odczytu** — nic nie modyfikuje notatek w iCloud.
+- **W razie wątpliwości → `95-nieposortowane`**, nigdy kategoria „na oko".
+  Notatka raz posortowana (`_stan/organizacja.json`) zachowuje kategorię nadaną
+  ręcznie przez człowieka.
+- **Uprawnienia TCC** (Automatyzacja → Notatki; Pełny dostęp do dysku dla
+  automatu) i notatki zablokowane hasłem → `HUMAN_ACTION_REQUIRED.md`, nigdy obejście.
+- Konfiguracja przez `.env` (`NOTATKI_ROOT`, `NOTATKI_ACCOUNT`, `NOTATKI_PAPER`,
+  `NOTATKI_LOOKBACK_DAYS`, `NOTATKI_AUTO_ORGANIZE`) — fragment do dopisania:
+  `scripts/notatki/env.notatki.example`.
+- Automat sortuje bez nadzoru TYLKO przy `NOTATKI_AUTO_ORGANIZE=true`; domyślnie
+  PDF-y czekają w `00-inbox` na ręczne `/notatki`.
 
 ---
 
