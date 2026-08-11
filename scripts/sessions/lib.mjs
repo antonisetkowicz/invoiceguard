@@ -194,7 +194,13 @@ export async function parseTranscript(filePath) {
     }
     if (e.type === 'assistant' && !e.isSidechain) session.assistant_messages++;
 
-    const hit = matchLimit(text);
+    // Komunikat o limicie liczy się TYLKO z wpisu systemowego/błędu albo z
+    // krótkiej wiadomości asystenta. Inaczej sesja, w której ktoś ROZMAWIA o
+    // limitach (albo je cytuje), zostałaby wzięta za zatrzymaną przez limit.
+    const errorish = e.type === 'system' || e.isApiErrorMessage === true
+      || (e.type === 'assistant' && text.length < 400);
+    const strongMarker = /^\s*(claude ai usage limit reached|api error:?\s*429)/i.test(text);
+    const hit = (errorish || strongMarker) ? matchLimit(text) : null;
     if (hit) {
       session.limit_event = {
         at: ts,

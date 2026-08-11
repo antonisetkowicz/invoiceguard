@@ -57,10 +57,18 @@ write('sesja-portfel', [
   { ...base, type: 'system', timestamp: iso(-8000_000), content: "You've hit your monthly spend limit · raise it at claude.ai/settings/usage" },
 ]);
 
+// 5) sesja, w której tylko ROZMAWIANO o limitach → NIE zablokowana
+write('sesja-o-limitach', [
+  { ...base, type: 'user', timestamp: iso(-4000_000), message: { role: 'user', content: 'Zbuduj system, który wykrywa, że sesja dostała komunikat "Claude AI usage limit reached" i wznawia ją po resecie' } },
+  { ...base, type: 'assistant', timestamp: iso(-3900_000), message: { role: 'assistant', content: [{ type: 'text', text: `Opisuję wzorce: rate_limit_error, API Error: 429, usage limit reached, monthly spend limit. ${'Szczegółowe omówienie każdego z nich. '.repeat(20)}` }] } },
+]);
+
 const sessions = await scanLocalSessions({ projectsDir: path.join(tmp, 'projects') });
 const byId = Object.fromEntries(sessions.map((s) => [s.session_id, s]));
 
-ok(sessions.length === 4, `skan znalazł 4 sesje (jest ${sessions.length})`);
+ok(sessions.length === 5, `skan znalazł 5 sesji (jest ${sessions.length})`);
+ok(byId['sesja-o-limitach']?.status !== 'blocked_by_limit',
+  'sesja-o-limitach: rozmowa O limitach nie jest brana za zatrzymanie przez limit');
 ok(byId['sesja-gotowa']?.status === 'blocked_by_limit', 'sesja-gotowa: status blocked_by_limit');
 ok(byId['sesja-gotowa']?.auto_resumable === true, 'sesja-gotowa: auto_resumable');
 ok(byId['sesja-gotowa']?.reset_passed === true, 'sesja-gotowa: reset już minął → do wznowienia');
