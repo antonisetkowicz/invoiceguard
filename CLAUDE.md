@@ -233,6 +233,18 @@ Samodzielna komenda — nie jest wpięta w żaden z 4 bytów/pipeline'ów powyż
 skonsolidowana w `/api` po dodaniu obsługi xAI, żeby nie utrzymywać dwóch
 niemal identycznych komend.)
 
+### Instalacja globalna (dostępność w KAŻDEJ konwersacji, dowolne repo)
+`/api` to pojedynczy plik komendy bez silnika/subagentów/harmonogramu (w
+odróżnieniu od `/autoc`), więc globalna instalacja to zwykła kopia do
+`~/.claude/commands/`:
+`node scripts/install-api-global.mjs` (jednorazowo, na komputerze
+użytkownika; `--dry-run` pokazuje plan, `--uninstall` usuwa). Po instalacji
+`/api` działa w każdej sesji Claude Code na tym komputerze niezależnie od
+tego, czy repo invoiceguard jest w ogóle wgrane — ale poza checkoutem tego
+repo nie ma repo-lokalnego `.env`, więc `GEMINI_API_KEY`/`XAI_API_KEY` trzeba
+wtedy ustawić jako zwykłe zmienne środowiskowe (np. w `~/.zshrc`/`~/.bashrc`),
+nie w pliku repo.
+
 ---
 
 ## Stan prac (aktualne decyzje)
