@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * scan.mjs — krok 1 systemu /wznow.
+ * scan.mjs — krok 1 systemu /autoc.
  *
  * Skanuje wszystkie sesje Claude Code i produkuje:
  *   .claude/session-state/sessions.json  — pełna lista sesji + status limitu
@@ -8,10 +8,10 @@
  *   .claude/session-state/SESSIONS.md    — czytelny raport dla człowieka
  *
  * Użycie:
- *   node scripts/sessions/scan.mjs
- *   node scripts/sessions/scan.mjs --remote /ścieżka/do/remote-sessions.json
- *   node scripts/sessions/scan.mjs --json          # wypisz sessions.json na stdout
- *   node scripts/sessions/scan.mjs --blocked-only  # tylko zablokowane limitem
+ *   node scripts/autoc/scan.mjs
+ *   node scripts/autoc/scan.mjs --remote /ścieżka/do/remote-sessions.json
+ *   node scripts/autoc/scan.mjs --json          # wypisz sessions.json na stdout
+ *   node scripts/autoc/scan.mjs --blocked-only  # tylko zablokowane limitem
  */
 
 import fs from 'node:fs';

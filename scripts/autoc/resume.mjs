@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * resume.mjs — krok 3 systemu /wznow: wznawianie sesji LOKALNYCH.
+ * resume.mjs — krok 3 systemu /autoc: wznawianie sesji LOKALNYCH.
  *
  * Bierze wynik `scan.mjs`, wybiera sesje zatrzymane przez limit, którym limit
  * już się odnowił, i wznawia je poleceniem `claude --resume <id> -p "<prompt>"`
@@ -9,16 +9,16 @@
  * DOMYŚLNIE TRYB PRÓBNY (dry-run) — nic nie uruchamia, tylko wypisuje plan.
  * Realne wznowienie wymaga JEDNOCZEŚNIE:
  *   - flagi `--apply`
- *   - `AUTORESUME_ENABLED=true` w .env (albo flagi `--force`)
+ *   - `AUTOC_ENABLED=true` w .env (albo flagi `--force`)
  *
  * Sesje ZDALNE (claude.ai/code) nie są tu obsługiwane — nie da się ich wznowić
- * z dysku; robi to komenda /wznow przez MCP Claude_Code_Remote.
+ * z dysku; robi to komenda /autoc przez MCP Claude_Code_Remote.
  *
  * Użycie:
- *   node scripts/sessions/resume.mjs                 # plan (dry-run)
- *   node scripts/sessions/resume.mjs --apply         # realne wznowienie
- *   node scripts/sessions/resume.mjs --apply --only <sessionId>
- *   node scripts/sessions/resume.mjs --json
+ *   node scripts/autoc/resume.mjs                 # plan (dry-run)
+ *   node scripts/autoc/resume.mjs --apply         # realne wznowienie
+ *   node scripts/autoc/resume.mjs --apply --only <sessionId>
+ *   node scripts/autoc/resume.mjs --json
  */
 
 import fs from 'node:fs';
@@ -32,31 +32,37 @@ const conf = loadConfig();
 const argv = process.argv.slice(2);
 const flag = (n) => argv.includes(n);
 const opt = (n, d = null) => { const i = argv.indexOf(n); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
-/** Priorytet: zmienna środowiskowa > .claude/wznow.config.json > wartość domyślna. */
-const num = (envKey, confKey, dflt) => {
-  const v = Number(process.env[envKey] ?? conf[confKey]);
+/**
+ * Zmienna środowiskowa pod nową nazwą (AUTOC_X), a jeśli jej nie ma — pod starą
+ * (AUTORESUME_X sprzed przemianowania systemu), żeby istniejące `.env` działały.
+ */
+const env = (name) => process.env[`AUTOC_${name}`] ?? process.env[`AUTORESUME_${name}`];
+
+/** Priorytet: zmienna środowiskowa > .claude/autoc.config.json > wartość domyślna. */
+const num = (envName, confKey, dflt) => {
+  const v = Number(env(envName) ?? conf[confKey]);
   return Number.isFinite(v) && v >= 0 ? v : dflt;
 };
 
-const DEFAULT_PROMPT = '[auto-wznowienie /wznow] Limit się odnowił. Kontynuuj dokładnie od miejsca, '
+const DEFAULT_PROMPT = '[auto-wznowienie /autoc] Limit się odnowił. Kontynuuj dokładnie od miejsca, '
   + 'w którym przerwałeś. Najpierw jednym zdaniem streść, na czym stanąłeś, potem '
   + 'dokończ zadanie. Jeśli zadanie było już skończone — napisz to i nic nie zmieniaj. '
   + 'Nie zaczynaj nowego zakresu prac na własną rękę.';
 
 const CFG = {
-  enabled: process.env.AUTORESUME_ENABLED !== undefined
-    ? String(process.env.AUTORESUME_ENABLED).toLowerCase() === 'true'
+  enabled: env('ENABLED') !== undefined
+    ? String(env('ENABLED')).toLowerCase() === 'true'
     : conf.auto_resume_local === true,
-  maxAttempts: num('AUTORESUME_MAX_ATTEMPTS', 'max_attempts', 3),
-  cooldownMin: num('AUTORESUME_COOLDOWN_MIN', 'cooldown_min', 60),
-  maxAgeDays: num('AUTORESUME_MAX_AGE_DAYS', 'max_age_days', 7),
-  maxPerRun: num('AUTORESUME_MAX_PER_RUN', 'max_per_run', 5),
-  timeoutMin: num('AUTORESUME_TIMEOUT_MIN', 'timeout_min', 30),
+  maxAttempts: num('MAX_ATTEMPTS', 'max_attempts', 3),
+  cooldownMin: num('COOLDOWN_MIN', 'cooldown_min', 60),
+  maxAgeDays: num('MAX_AGE_DAYS', 'max_age_days', 7),
+  maxPerRun: num('MAX_PER_RUN', 'max_per_run', 5),
+  timeoutMin: num('TIMEOUT_MIN', 'timeout_min', 30),
   claudeBin: process.env.CLAUDE_BIN || 'claude',
-  extraFlags: (process.env.AUTORESUME_CLAUDE_FLAGS || '').split(' ').filter(Boolean),
-  exclude: (process.env.AUTORESUME_EXCLUDE || '').split(',').map((s) => s.trim()).filter(Boolean)
+  extraFlags: (env('CLAUDE_FLAGS') || '').split(' ').filter(Boolean),
+  exclude: (env('EXCLUDE') || '').split(',').map((s) => s.trim()).filter(Boolean)
     .concat(Array.isArray(conf.exclude) ? conf.exclude : []),
-  prompt: process.env.AUTORESUME_PROMPT || conf.resume_prompt || DEFAULT_PROMPT,
+  prompt: env('PROMPT') || conf.resume_prompt || DEFAULT_PROMPT,
 };
 
 const apply = flag('--apply');
@@ -68,7 +74,7 @@ const willRun = apply && (CFG.enabled || force);
 const sessionsFile = opt('--sessions', path.join(STATE_DIR, 'sessions.json'));
 const scan = readJson(sessionsFile, null);
 if (!scan) {
-  console.error(`Brak ${sessionsFile} — uruchom najpierw: node scripts/sessions/scan.mjs`);
+  console.error(`Brak ${sessionsFile} — uruchom najpierw: node scripts/autoc/scan.mjs`);
   process.exit(2);
 }
 
@@ -85,7 +91,7 @@ for (const s of scan.sessions || []) {
   const skip = (reason) => { d.action = 'skip'; d.reason = reason; decisions.push(d); return true; };
 
   if (s.status !== 'blocked_by_limit') { skip('nie jest zatrzymana przez limit'); continue; }
-  if (s.source !== 'local') { skip('sesja zdalna — wznawia ją /wznow przez MCP, nie ten skrypt'); continue; }
+  if (s.source !== 'local') { skip('sesja zdalna — wznawia ją /autoc przez MCP, nie ten skrypt'); continue; }
   if (!s.auto_resumable) { skip(`limit typu "${s.limit_type}" wymaga decyzji człowieka`); continue; }
   if (!s.reset_passed) {
     d.action = 'wait';
@@ -95,7 +101,7 @@ for (const s of scan.sessions || []) {
   }
   if (!s.cwd || !fs.existsSync(s.cwd)) { skip(`katalog roboczy nie istnieje (${s.cwd || 'brak'})`); continue; }
   if (CFG.maxAgeDays && s.age_days > CFG.maxAgeDays) { skip(`sesja starsza niż ${CFG.maxAgeDays} dni (${s.age_days} d)`); continue; }
-  if (CFG.exclude.some((frag) => (s.cwd || '').includes(frag))) { skip('katalog na liście AUTORESUME_EXCLUDE'); continue; }
+  if (CFG.exclude.some((frag) => (s.cwd || '').includes(frag))) { skip('katalog na liście AUTOC_EXCLUDE'); continue; }
 
   const past = log.attempts[s.session_id] || [];
   if (past.length >= CFG.maxAttempts) { skip(`wyczerpany limit prób (${past.length}/${CFG.maxAttempts})`); continue; }
@@ -156,7 +162,7 @@ const report = {
   generated_at: new Date(now).toISOString(),
   mode: willRun ? 'apply' : 'dry-run',
   blocked_reason: apply && !willRun
-    ? 'auto_resume_local=false w .claude/wznow.config.json (albo AUTORESUME_ENABLED != true) — uruchom z --force, by wymusić'
+    ? 'auto_resume_local=false w .claude/autoc.config.json (albo AUTOC_ENABLED != true) — uruchom z --force, by wymusić'
     : null,
   config: { ...CFG, prompt: `${CFG.prompt.slice(0, 80)}…` },
   counts: {
@@ -185,7 +191,7 @@ if (flag('--json')) {
   console.log(`Kandydaci: ${report.counts.kandydaci} · czekają na reset: ${report.counts.czekaja} · pominięte: ${report.counts.pominiete}`);
   for (const d of toResume) console.log(`  → wznowić: ${d.session_id} [${d.project}/${d.kategoria}] w ${d.cwd} (próba ${d.attempt})`);
   for (const d of report.waiting) console.log(`  ⏳ czeka:  ${d.session_id} [${d.project}] — ${d.reason}`);
-  if (report.counts.ponad_limit_runu) console.log(`  (${report.counts.ponad_limit_runu} ponad limit AUTORESUME_MAX_PER_RUN=${CFG.maxPerRun} — pójdą w kolejnym cyklu)`);
+  if (report.counts.ponad_limit_runu) console.log(`  (${report.counts.ponad_limit_runu} ponad limit AUTOC_MAX_PER_RUN=${CFG.maxPerRun} — pójdą w kolejnym cyklu)`);
   console.log(`\nRaport: ${reportFile}\nLog prób: ${logFile}`);
 }
 

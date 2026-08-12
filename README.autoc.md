@@ -1,14 +1,14 @@
-# /wznow — auto-wznawianie sesji zatrzymanych przez limit + kategoryzacja konwersacji
+# /autoc — auto-wznawianie sesji zatrzymanych przez limit + kategoryzacja konwersacji
 
 System, który **co 5 godzin** sprawdza, które sesje Claude Code zatrzymał limit,
 **wznawia je automatycznie** po odnowieniu limitu i **kategoryzuje wszystkie
 konwersacje wg projektu**.
 
 ```
-Routine „wznow-cykl-5h" (co 5h)
+Routine „autoc-cykl-5h" (co 5h)
         │
         ▼
-  sesja dyżurna  ──▶  /wznow  ──▶  session-scanner  ──▶  session-resumer
+  sesja dyżurna  ──▶  /autoc  ──▶  session-scanner  ──▶  session-resumer
                                         │                      │
                             sessions.json/projects.json    wznowienia + budziki
                                         │                      │
@@ -55,60 +55,60 @@ Routine „wznow-cykl-5h" (co 5h)
 Jednorazowo, z checkoutu repo na swoim komputerze:
 
 ```bash
-node scripts/sessions/install-global.mjs      # instalacja + harmonogram co 5h
-node scripts/sessions/install-global.mjs --dry-run   # najpierw podgląd
-node scripts/sessions/install-global.mjs --no-cron   # bez harmonogramu
-node ~/.claude/wznow/install-global.mjs --uninstall  # odinstalowanie
+node scripts/autoc/install-global.mjs      # instalacja + harmonogram co 5h
+node scripts/autoc/install-global.mjs --dry-run   # najpierw podgląd
+node scripts/autoc/install-global.mjs --no-cron   # bez harmonogramu
+node ~/.claude/autoc/install-global.mjs --uninstall  # odinstalowanie
 ```
 
 Co się dzieje po instalacji:
 
 | element | gdzie ląduje | efekt |
 |---|---|---|
-| komenda `/wznow` | `~/.claude/commands/wznow.md` | działa w **każdej** konwersacji Claude Code na tym komputerze, w dowolnym projekcie |
+| komenda `/autoc` | `~/.claude/commands/autoc.md` | działa w **każdej** konwersacji Claude Code na tym komputerze, w dowolnym projekcie |
 | subagenci | `~/.claude/agents/session-{scanner,resumer}.md` | jak wyżej |
-| silnik | `~/.claude/wznow/*.mjs` | niezależny od repo InvoiceGuard |
-| ustawienia | `~/.claude/wznow.config.json`, `~/.claude/session-rules.json` | **nie są nadpisywane** przy ponownej instalacji |
+| silnik | `~/.claude/autoc/*.mjs` | niezależny od repo InvoiceGuard |
+| ustawienia | `~/.claude/autoc.config.json`, `~/.claude/session-rules.json` | **nie są nadpisywane** przy ponownej instalacji |
 | stan i raporty | `~/.claude/session-state/` | wspólne dla wszystkich projektów |
-| harmonogram | launchd `com.wznow.cykl5h` (macOS) albo cron (Linux) | cykl co 5h **chodzi w tle, nawet gdy nie masz otwartej żadnej sesji** |
-| log cyklu | `~/.claude/wznow/cykl.log` | rotowany przy 512 KB |
+| harmonogram | launchd `com.autoc.cykl5h` (macOS) albo cron (Linux) | cykl co 5h **chodzi w tle, nawet gdy nie masz otwartej żadnej sesji** |
+| log cyklu | `~/.claude/autoc/cykl.log` | rotowany przy 512 KB |
 
 Sprawdzenie, że harmonogram żyje:
 
 ```bash
-launchctl list | grep com.wznow.cykl5h     # macOS
-crontab -l | grep wznow                    # Linux
-tail -20 ~/.claude/wznow/cykl.log
+launchctl list | grep com.autoc.cykl5h     # macOS
+crontab -l | grep autoc                    # Linux
+tail -20 ~/.claude/autoc/cykl.log
 ```
 
 Instalator nadpisuje pliki komendy i agentów (żeby dało się aktualizować
 `git pull` + ponowna instalacja), ale **nigdy** nie rusza Twojego
-`wznow.config.json`, `session-rules.json` ani historii w `session-state/`.
+`autoc.config.json`, `session-rules.json` ani historii w `session-state/`.
 Na macOS launchd nadrabia przespane cykle po wybudzeniu komputera.
 
-Skrypty rozpoznają, gdzie działają: uruchomione z `~/.claude/wznow/` czytają
+Skrypty rozpoznają, gdzie działają: uruchomione z `~/.claude/autoc/` czytają
 konfigurację z `~/.claude/`, uruchomione z repo — z `<repo>/.claude/`. Można to
-wymusić zmienną `WZNOW_HOME`.
+wymusić zmienną `AUTOC_HOME`.
 
 ---
 
 ## Uruchomienie
 
 ```bash
-/wznow                 # pełny przebieg: skan + wznowienia + raport
-/wznow --dry-run       # skan i plan, zero wznowień
-/wznow --kategorie     # sam raport kategoryzacji projektów
-/wznow --tylko-lokalne # pomiń sesje zdalne
-/wznow --tylko-zdalne  # pomiń transkrypty lokalne
+/autoc                 # pełny przebieg: skan + wznowienia + raport
+/autoc --dry-run       # skan i plan, zero wznowień
+/autoc --kategorie     # sam raport kategoryzacji projektów
+/autoc --tylko-lokalne # pomiń sesje zdalne
+/autoc --tylko-zdalne  # pomiń transkrypty lokalne
 ```
 
 Bez Claude'a, z samego terminala:
 
 ```bash
-node scripts/sessions/scan.mjs            # inwentarz + kategoryzacja
-node scripts/sessions/resume.mjs          # plan wznowień (dry-run)
-node scripts/sessions/resume.mjs --apply  # realne wznowienie sesji lokalnych
-node scripts/sessions/selftest.mjs        # test detektorów limitu (31 asercji)
+node scripts/autoc/scan.mjs            # inwentarz + kategoryzacja
+node scripts/autoc/resume.mjs          # plan wznowień (dry-run)
+node scripts/autoc/resume.mjs --apply  # realne wznowienie sesji lokalnych
+node scripts/autoc/selftest.mjs        # test detektorów limitu (31 asercji)
 ```
 
 ---
@@ -117,16 +117,16 @@ node scripts/sessions/selftest.mjs        # test detektorów limitu (31 asercji)
 
 | plik | rola |
 |---|---|
-| `.claude/commands/wznow.md` | orkiestrator komendy `/wznow` |
+| `.claude/commands/autoc.md` | orkiestrator komendy `/autoc` |
 | `.claude/agents/session-scanner.md` | KROK 1 — inwentarz sesji (tylko odczyt) |
 | `.claude/agents/session-resumer.md` | KROK 2 — wznowienia, budziki, eskalacje |
-| `.claude/wznow.config.json` | **polityka** (bez sekretów, commitowana) |
+| `.claude/autoc.config.json` | **polityka** (bez sekretów, commitowana) |
 | `.claude/session-rules.json` | reguły kategoryzacji — edytujesz ręcznie |
-| `scripts/sessions/lib.mjs` | parser transkryptów, detektory limitu, grupowanie |
-| `scripts/sessions/scan.mjs` | skan → `sessions.json`, `projects.json`, `SESSIONS.md` |
-| `scripts/sessions/resume.mjs` | wznawianie sesji lokalnych + rejestr prób |
-| `scripts/sessions/selftest.mjs` | testy na syntetycznych transkryptach |
-| `scripts/sessions/install-global.mjs` | instalacja globalna (`~/.claude/`) + harmonogram co 5h |
+| `scripts/autoc/lib.mjs` | parser transkryptów, detektory limitu, grupowanie |
+| `scripts/autoc/scan.mjs` | skan → `sessions.json`, `projects.json`, `SESSIONS.md` |
+| `scripts/autoc/resume.mjs` | wznawianie sesji lokalnych + rejestr prób |
+| `scripts/autoc/selftest.mjs` | testy na syntetycznych transkryptach |
+| `scripts/autoc/install-global.mjs` | instalacja globalna (`~/.claude/`) + harmonogram co 5h |
 | `.claude/session-state/` | stan runtime (**gitignorowany** — zawiera prompty) |
 
 ---
@@ -154,9 +154,9 @@ ostatnim zdarzeniem był komunikat o limicie i nie ma po nim żadnej pracy.
 
 ### Chmura (claude.ai/code) — działa samo
 
-- Routine **`wznow-cykl-5h`** (`0 */5 * * *`, serwer zakotwicza minutę na
-  moment utworzenia) budzi **sesję dyżurną** „Dyżur /wznow" (tag
-  `wznow-dyzur`), która ma dostęp do MCP `Claude_Code_Remote` i wykonuje cały
+- Routine **`autoc-cykl-5h`** (`0 */5 * * *`, serwer zakotwicza minutę na
+  moment utworzenia) budzi **sesję dyżurną** „Dyżur /autoc" (tag
+  `autoc-dyzur`), która ma dostęp do MCP `Claude_Code_Remote` i wykonuje cały
   pipeline.
 - Dlaczego przez sesję dyżurną, a nie świeżą sesję na każde odpalenie: Routine
   zakładane z poziomu sesji (przez MCP) **nie dostają w tej organizacji
@@ -166,11 +166,11 @@ ostatnim zdarzeniem był komunikat o limicie i nie ma po nim żadnej pracy.
 - Jeśli wolisz świeżą sesję na każdy cykl: załóż Routine **ręcznie w panelu
   Routines na claude.ai** — te zakładane przez UI mają zapisane konektory MCP
   (widać to w `list_triggers` jako `mcp_connections`). Prompt do wklejenia
-  weź z pola `prompt` istniejącego `wznow-cykl-5h`.
+  weź z pola `prompt` istniejącego `autoc-cykl-5h`.
 - Podgląd i zmiana: `mcp__Claude_Code_Remote__list_triggers` /
   `update_trigger`. Wyłączenie na chwilę: `update_trigger` z `enabled: false`.
 - Gdy sesja dyżurna zostanie zarchiwizowana: odtwórz ją (`create_session` z
-  tagiem `wznow-dyzur`, branch z tym systemem) i wskaż nowy
+  tagiem `autoc-dyzur`, branch z tym systemem) i wskaż nowy
   `persistent_session_id` w Routine.
 
 ### Komputer lokalny (macOS/Linux) — launchd albo cron
@@ -181,12 +181,12 @@ uruchamia je harmonogram zakładany przez `install-global.mjs` (sekcja
 
 ```cron
 # co 5 godzin: skan + wznowienie sesji zatrzymanych przez limit
-0 */5 * * * /bin/sh $HOME/.claude/wznow/run-cycle.sh
+0 */5 * * * /bin/sh $HOME/.claude/autoc/run-cycle.sh
 ```
 
 W cronie i launchd PATH bywa ubogi — jeśli `node` albo `claude` nie startują,
-ustaw `WZNOW_NODE=/opt/homebrew/bin/node` w środowisku i
-`CLAUDE_BIN=/opt/homebrew/bin/claude` w `~/.claude/wznow/.env`.
+ustaw `AUTOC_NODE=/opt/homebrew/bin/node` w środowisku i
+`CLAUDE_BIN=/opt/homebrew/bin/claude` w `~/.claude/autoc/.env`.
 
 ---
 
@@ -221,7 +221,7 @@ zobaczy dużo sesji w koszu `inne`, tylko zaproponuje gotowy fragment JSON.
   allowliście oba warianty i używają tego, który zastaną; brak obu = obsługa
   tylko sesji lokalnych plus wpis w raporcie.
 - **Wykrywanie limitu opiera się na treści komunikatu.** Wzorce są w
-  `LIMIT_PATTERNS` w `scripts/sessions/lib.mjs`. Jeśli Anthropic zmieni
+  `LIMIT_PATTERNS` w `scripts/autoc/lib.mjs`. Jeśli Anthropic zmieni
   formułkę, dopisz wzorzec — `selftest.mjs` sprawdzi, że nic się nie rozjechało.
 - **Gdy komunikat nie podaje czasu resetu**, system zakłada okno 5h i oznacza
   to jako `reset_at_estimated: true`. Przy szacowanym resecie dalszym niż 6h

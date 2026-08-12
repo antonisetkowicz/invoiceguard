@@ -16,5 +16,5 @@ dist/
 # autoodpowiedzi — historia wiadomości (może zawierać treści prywatne, nie commitujemy)
 /message_log.json
 
-# /wznow — stan skanu sesji (zawiera fragmenty promptów, dane prywatne)
+# /autoc — stan skanu sesji (zawiera fragmenty promptów, dane prywatne)
 /.claude/session-state/

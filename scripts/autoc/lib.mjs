@@ -1,5 +1,5 @@
 /**
- * lib.mjs — wspólna biblioteka systemu /wznow
+ * lib.mjs — wspólna biblioteka systemu /autoc
  *
  * Czyta lokalne transkrypty Claude Code (~/.claude/projects/<enc-cwd>/<sessionId>.jsonl),
  * rozpoznaje sesje zatrzymane przez limit, wylicza moment odnowienia limitu
@@ -24,10 +24,10 @@ export const GLOBAL_HOME = path.join(HOME, '.claude');
  * Gdzie szukać konfiguracji i stanu. Pierwszy katalog z listy jest „domowy" —
  * to w nim lądują pliki stanu. Dzięki temu ten sam kod działa i w repo
  * (`<repo>/.claude/`), i po instalacji globalnej (`~/.claude/`, skrypty w
- * `~/.claude/wznow/`), bez żadnej konfiguracji.
+ * `~/.claude/autoc/`), bez żadnej konfiguracji.
  */
 export const CONFIG_DIRS = [
-  process.env.WZNOW_HOME,
+  process.env.AUTOC_HOME,
   SCRIPT_DIR.startsWith(GLOBAL_HOME) ? GLOBAL_HOME : null,
   path.join(REPO_ROOT, '.claude'),
   GLOBAL_HOME,
@@ -42,7 +42,7 @@ export function findConfigFile(name) {
   return null;
 }
 
-export const STATE_DIR = process.env.WZNOW_STATE_DIR || path.join(CONFIG_DIRS[0], 'session-state');
+export const STATE_DIR = process.env.AUTOC_STATE_DIR || path.join(CONFIG_DIRS[0], 'session-state');
 
 /** Okno limitu Claude odnawia się co 5 godzin — fallback gdy transkrypt nie podał czasu resetu. */
 export const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
@@ -577,12 +577,14 @@ export function readJson(file, fallback) {
 }
 
 /**
- * Wczytuje politykę systemu /wznow z `.claude/wznow.config.json`.
+ * Wczytuje politykę systemu /autoc z `.claude/autoc.config.json`.
  * Plik jest commitowany (bez sekretów), dzięki czemu ta sama polityka działa
  * w sesji lokalnej i w świeżej sesji zdalnej odpalonej przez Routine.
  */
 export function loadConfig() {
-  const file = findConfigFile('wznow.config.json');
+  // `wznow.config.json` to nazwa sprzed przemianowania systemu na autoc —
+  // czytamy ją nadal, żeby starsza instalacja nie straciła ustawień.
+  const file = findConfigFile('autoc.config.json') || findConfigFile('wznow.config.json');
   const cfg = (file ? readJson(file, {}) : {}) || {};
   // klucze zaczynające się od "//" to komentarze w JSON-ie
   return Object.fromEntries(Object.entries(cfg).filter(([k]) => !k.startsWith('//')));
@@ -594,10 +596,10 @@ export function loadConfig() {
  */
 export function loadEnv(file) {
   if (!file) {
-    // po instalacji globalnej .env leży obok skryptów (~/.claude/wznow/.env),
+    // po instalacji globalnej .env leży obok skryptów (~/.claude/autoc/.env),
     // w repo — w jego korzeniu
     file = [
-      process.env.WZNOW_ENV_FILE,
+      process.env.AUTOC_ENV_FILE,
       path.join(SCRIPT_DIR, '.env'),
       path.join(REPO_ROOT, '.env'),
       path.join(GLOBAL_HOME, '.env'),

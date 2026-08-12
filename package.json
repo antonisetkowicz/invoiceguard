@@ -12,11 +12,11 @@
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
-    "wznow:scan": "node scripts/sessions/scan.mjs",
-    "wznow:plan": "node scripts/sessions/resume.mjs",
-    "wznow:resume": "node scripts/sessions/resume.mjs --apply",
-    "wznow:test": "node scripts/sessions/selftest.mjs",
-    "wznow:install": "node scripts/sessions/install-global.mjs"
+    "autoc:scan": "node scripts/autoc/scan.mjs",
+    "autoc:plan": "node scripts/autoc/resume.mjs",
+    "autoc:resume": "node scripts/autoc/resume.mjs --apply",
+    "autoc:test": "node scripts/autoc/selftest.mjs",
+    "autoc:install": "node scripts/autoc/install-global.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
