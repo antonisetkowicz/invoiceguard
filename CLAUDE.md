@@ -1,11 +1,12 @@
 # CLAUDE.md — pamięć projektu
 
-To repo zawiera CZTERY byty + jedno samodzielne narzędzie pomocnicze:
+To repo zawiera CZTERY byty + dwa samodzielne narzędzia pomocnicze:
 1. **InvoiceGuard** — istniejący SaaS (Next.js 15 + React 19 + TypeScript + Prisma + Postgres). Audyt faktur B2B / odzysk kosztów.
 2. **autobiznes** — autonomiczny system biznesowy zbudowany w `.claude/`, uruchamiany komendą `/autobiznes`.
 3. **autoodpowiedzi** — asystent automatycznego reagowania na e-mail/WhatsApp zbudowany w `.claude/`, uruchamiany komendą `/autoodpowiedzi`.
 4. **autoc** — auto-wznawianie sesji Claude Code zatrzymanych przez limit + kategoryzacja konwersacji wg projektu, uruchamiane komendą `/autoc` i cyklem co 5h.
 5. **/szukajfilmy** — samodzielna komenda wyszukiwania metadanych (tytuł/opis/link) na YouTube i Instagramie. Nie jest częścią żadnego z powyższych systemów. Szczegóły niżej.
+6. **/git** — samodzielna komenda podpinająca do sesji (przez `add_repo`) repozytoria GitHub potrzebne do bieżącego zadania w konwersacji. Nie jest częścią żadnego z powyższych systemów. Szczegóły niżej.
 
 ---
 
@@ -180,6 +181,32 @@ percepcji audio/wideo z tej sesji.
   wymagałoby własnego konta biznesowego + aplikacji Meta for Developers —
   eskalacja do `HUMAN_ACTION_REQUIRED.md`, nie coś do zrobienia automatycznie.
 - Samodzielna komenda — nie jest wpięta w żaden z 4 bytów/pipeline'ów powyżej.
+
+---
+
+## /git — dostęp do repozytoriów GitHub potrzebnych w konwersacji
+
+`.claude/commands/git.md`, uruchamiane `/git [owner/repo lub URL, ...]`
+(argumenty opcjonalne). Podpina do bieżącej sesji, przez narzędzie
+`add_repo`, wszystkie repozytoria GitHub faktycznie potrzebne do wykonania
+zadania w danej konwersacji — żeby nie trzeba było o dostęp prosić ręcznie
+w trakcie pracy.
+
+- Bez argumentów: wykrywa potrzebne repo z kontekstu bieżącej rozmowy
+  (nazwy/URL-e padłe w zadaniu użytkownika). Z argumentami: podpina wprost
+  podane `owner/repo`/URL-e.
+- Repo niejednoznaczne (sama nazwa bez ownera) rozwiązuje przez `list_repos`
+  zamiast zgadywać.
+- Domyślny `access: "read"`; `"push"` tylko gdy zadanie w tym repo
+  faktycznie wymaga commitów/PR-ów.
+- Świadomie NIE podpina repo „na wszelki wypadek" — tylko to, co zadanie
+  realnie wymaga (każde `add_repo` mintuje poświadczenia i odpytuje
+  GitHuba). Repo, do których dostęp jest odrzucony (brak instalacji GitHub
+  App / zgody organizacji), nie są ponawiane — powód trafia wprost do
+  użytkownika.
+- Samodzielna komenda — nie jest wpięta w żaden z 4 bytów/pipeline'ów
+  powyżej; mogą z niej korzystać wszystkie, gdy subagent/orkiestrator
+  potrzebuje repo spoza bieżącego checkoutu.
 
 ---
 
