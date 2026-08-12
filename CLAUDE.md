@@ -1,12 +1,13 @@
 # CLAUDE.md — pamięć projektu
 
-To repo zawiera CZTERY byty + dwa samodzielne narzędzia pomocnicze:
+To repo zawiera CZTERY byty + trzy samodzielne narzędzia pomocnicze:
 1. **InvoiceGuard** — istniejący SaaS (Next.js 15 + React 19 + TypeScript + Prisma + Postgres). Audyt faktur B2B / odzysk kosztów.
 2. **autobiznes** — autonomiczny system biznesowy zbudowany w `.claude/`, uruchamiany komendą `/autobiznes`.
 3. **autoodpowiedzi** — asystent automatycznego reagowania na e-mail/WhatsApp zbudowany w `.claude/`, uruchamiany komendą `/autoodpowiedzi`.
 4. **autoc** — auto-wznawianie sesji Claude Code zatrzymanych przez limit + kategoryzacja konwersacji wg projektu, uruchamiane komendą `/autoc` i cyklem co 5h.
 5. **/szukajfilmy** — samodzielna komenda wyszukiwania metadanych (tytuł/opis/link) na YouTube i Instagramie. Nie jest częścią żadnego z powyższych systemów. Szczegóły niżej.
 6. **/repos-setup** — samodzielna komenda grupowo dodająca repozytoria GitHub do zakresu bieżącej sesji na starcie (zamiast pytań o zgodę rozrzuconych w trakcie pracy). Szczegóły niżej.
+7. **/gemini** — samodzielna komenda jednorazowych zapytań do Google Gemini API (`generateContent`). Nie jest częścią żadnego z powyższych systemów. Szczegóły niżej.
 
 ---
 
@@ -202,6 +203,29 @@ interaktywnej (appka/przeglądarka) — w sesjach bez kanału do potwierdzeń ko
 samym błędem `-32003`. Domyślny `access` dla `add_repo` to `read`; `push` tylko na
 wyraźną prośbę dla konkretnego repo. Zakres dodany przez tę komendę jest per-sesja —
 nowa sesja odpala ją od nowa, nic nie jest zapisywane trwale.
+
+---
+
+## /gemini — jednorazowe zapytanie do Google Gemini API
+
+`.claude/commands/gemini.md`, uruchamiane `/gemini prompt: <tekst>,
+model: <opcjonalnie, domyślnie gemini-2.5-flash>`. Wysyła pojedynczy prompt
+do Gemini (`generateContent`) i zwraca odpowiedź w czacie — jednorazowe
+wywołanie zewnętrznego API, NIE przełącznik domyślnego modelu tej sesji.
+
+**Klucz wyłącznie z `.env` (`GEMINI_API_KEY`), nigdy hardkodowany.** Zgodnie
+z twardą zasadą tego repo („Sekrety WYŁĄCZNIE przez `.env`... Nigdy nie
+hardkoduj") komenda nie zawiera i nigdy nie ma zawierać realnej wartości
+klucza — czyta go ze zmiennej środowiskowej w locie. Platforma sesji
+dodatkowo sama blokuje odczyt/zapis plików `.env*` z poziomu narzędzi, co
+wzmacnia tę regułę technicznie, nie tylko konwencją. Jeśli `GEMINI_API_KEY`
+nie jest ustawiony, komenda **nie prosi o wklejenie klucza na czacie**
+(trafiłby do logów/transkryptu) — instruuje krótko, żeby dodać go do
+lokalnego `.env`, i się zatrzymuje. Klucz do Gemini API zdobywa się w Google
+AI Studio (aistudio.google.com/apikey); darmowy tier z limitami zapytań/min
+istnieje dla większości modeli.
+
+Samodzielna komenda — nie jest wpięta w żaden z 4 bytów/pipeline'ów powyżej.
 
 ---
 
