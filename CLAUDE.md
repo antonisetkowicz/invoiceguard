@@ -1,10 +1,11 @@
 # CLAUDE.md — pamięć projektu
 
-To repo zawiera CZTERY byty:
+To repo zawiera CZTERY byty + jedno samodzielne narzędzie pomocnicze:
 1. **InvoiceGuard** — istniejący SaaS (Next.js 15 + React 19 + TypeScript + Prisma + Postgres). Audyt faktur B2B / odzysk kosztów.
 2. **autobiznes** — autonomiczny system biznesowy zbudowany w `.claude/`, uruchamiany komendą `/autobiznes`.
 3. **autoodpowiedzi** — asystent automatycznego reagowania na e-mail/WhatsApp zbudowany w `.claude/`, uruchamiany komendą `/autoodpowiedzi`.
 4. **autoc** — auto-wznawianie sesji Claude Code zatrzymanych przez limit + kategoryzacja konwersacji wg projektu, uruchamiane komendą `/autoc` i cyklem co 5h.
+5. **/szukajfilmy** — samodzielna komenda wyszukiwania metadanych (tytuł/opis/link) na YouTube i Instagramie. Nie jest częścią żadnego z powyższych systemów. Szczegóły niżej.
 
 ---
 
@@ -153,6 +154,32 @@ Skrypty same wykrywają kontekst (repo vs `~/.claude/`), można wymusić `AUTOC_
 - Prompt wznawiający pochodzi z configu i zabrania rozszerzania zakresu prac.
 - Nie kasujemy cudzych Routine — tylko własne `autoc-resume-*` / `autoc-wake-*`,
   nigdy `autoc-cykl-5h`.
+
+---
+
+## /szukajfilmy — wyszukiwanie YouTube/Instagram (metadane, nie odtwarzacz)
+
+`.claude/commands/szukajfilmy.md`, uruchamiane `/szukajfilmy zapytanie: <fraza>,
+platforma: youtube|instagram|oba, liczba: <n>`. Zwraca listę wyników (tytuł,
+autor, link) — **nie pobiera i nie odtwarza wideo**, bo Claude nie ma
+percepcji audio/wideo z tej sesji.
+
+- **YouTube**: oficjalne, darmowe YouTube Data API v3 (`search.list`) jeśli w
+  `.env` ustawiony `YOUTUBE_API_KEY` (patrz `.env.example`); bez klucza —
+  fallback na `WebSearch site:youtube.com`, działa od razu bez konfiguracji.
+- **Instagram**: nie ma oficjalnego darmowego API do wyszukiwania cudzych
+  publicznych postów (Graph API obsługuje tylko własne konta biznesowe) —
+  jedyna droga to `WebSearch site:instagram.com`, wyniki z natury skąpe i
+  niepełne (Instagram mocno ogranicza indeksowanie). Komenda **świadomie nie
+  instaluje ani nie uruchamia** nieoficjalnych scraperów Instagrama znalezionych
+  na GitHubie (typu instaloader/instagrapi) — w odróżnieniu od zaakceptowanego
+  ryzyka ToS przy `/wyslij`, scrapery Instagrama zwykle wymagają danych
+  logowania i obchodzenia zabezpieczeń antybotowych, co jest osobną kategorią
+  ryzyka (bezpieczeństwo uruchamianego kodu + realne ryzyko prawne ze strony
+  Mety, nie tylko zawieszenie konta usługodawcy). Głębsze pokrycie Instagrama
+  wymagałoby własnego konta biznesowego + aplikacji Meta for Developers —
+  eskalacja do `HUMAN_ACTION_REQUIRED.md`, nie coś do zrobienia automatycznie.
+- Samodzielna komenda — nie jest wpięta w żaden z 4 bytów/pipeline'ów powyżej.
 
 ---
 
