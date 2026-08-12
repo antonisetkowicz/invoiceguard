@@ -1,0 +1,210 @@
+# =============================================================================
+# Konfiguracja monitora ofert nieruchomości
+#
+# Wszystko, co zależy od konkretnego portalu (selektory CSS, ścieżki w JSON-ie
+# osadzonym w stronie), siedzi w sekcji `portals` na dole tego pliku — dzięki
+# temu przeniesienie narzędzia na Morizon/Gratkę to edycja YAML-a, nie kodu.
+# =============================================================================
+
+# Który profil z sekcji `portals` jest aktywny.
+portal: otodom
+
+search:
+  # URL wyników wyszukiwania — wklej gotowy link z przeglądarki PO ustawieniu
+  # filtrów (lokalizacja, cena, metraż). Domyślny to przykład: Warszawa,
+  # mieszkania na sprzedaż, 2-3 pokoje, do 900 tys. zł, od 45 m².
+  url: "https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie/mazowieckie/warszawa/warszawa/warszawa?limit=36&priceMax=900000&areaMin=45&roomsNumber=%5BTWO%2CTHREE%5D&by=LATEST&direction=DESC"
+
+  # Twardy limit ofert na jeden przebieg (ochrona przed zalaniem portalu
+  # requestami). 0 = bez limitu.
+  max_offers_per_run: 40
+
+  # Ile stron wyników maksymalnie przejść.
+  max_pages: 3
+
+  # Czy wchodzić na stronę każdej oferty po pełny opis i pełną galerię.
+  # Wyłącz, jeśli chcesz tylko szybki podgląd cen z listingu.
+  fetch_details: true
+
+scraping:
+  headless: true
+
+  # Realistyczny User-Agent. Podmień na własny z about:version, jeśli chcesz.
+  user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+  locale: "pl-PL"
+  timezone: "Europe/Warsaw"
+  viewport: { width: 1440, height: 900 }
+
+  # Rate limiting: losowa przerwa z przedziału przed KAŻDYM wejściem na stronę.
+  # Nie schodź poniżej 2 s — to nie jest narzędzie do zasypywania serwera.
+  min_delay_seconds: 2.0
+  max_delay_seconds: 5.0
+
+  page_timeout_ms: 30000
+  navigation_retries: 2
+
+  # Zostaw puste — Playwright użyje Chromium z `playwright install chromium`.
+  # Wypełnij tylko, gdy masz własną binarkę (np. systemowy Chrome).
+  executable_path: ""
+
+  # Klik w baner zgody na cookies (bez tego portal potrafi nie wyrenderować treści).
+  accept_cookies: true
+
+images:
+  download: true
+  max_per_offer: 30
+  # Pobieraj ponownie plik, który już jest na dysku.
+  overwrite: false
+  timeout_ms: 30000
+  # Zdjęcia lecą z CDN-u, nie z backendu wyszukiwarki, więc mogą iść gęściej
+  # niż wejścia na strony ofert — ale nadal nie hurtem.
+  min_delay_seconds: 0.3
+  max_delay_seconds: 0.8
+
+storage:
+  # Ścieżki względne liczone są od katalogu tego pliku config.yaml.
+  database_path: "./data/offers.db"
+  images_dir: "./images"
+  reports_dir: "./reports"
+  debug_dir: "./debug"
+
+watch:
+  # Informacyjnie — realny harmonogram ustawia cron (patrz README).
+  interval_minutes: 180
+
+  # Ile przebiegów z rzędu oferta musi zniknąć z wyników, zanim uznamy ją za
+  # usuniętą. 1 = natychmiast (czułe na chwilowe błędy sieci).
+  mark_removed_after_missing_runs: 2
+
+  # Zapisuj raport markdown do storage.reports_dir.
+  write_markdown: true
+
+  # Nie generuj raportu, gdy nic się nie zmieniło.
+  skip_report_when_no_changes: true
+
+  webhook:
+    enabled: false
+    # Slack/Discord/n8n — cokolwiek przyjmuje POST z JSON-em.
+    url: ""
+    # Klucz, pod którym pójdzie tekst raportu ("text" dla Slacka, "content" dla Discorda).
+    text_field: "text"
+    # Dodatkowo dołącz ustrukturyzowane dane pod kluczem "changes".
+    include_structured: true
+    timeout_seconds: 15
+
+# =============================================================================
+# PROFILE PORTALI — tu podmieniasz selektory
+# =============================================================================
+portals:
+  otodom:
+    name: "Otodom"
+    base_url: "https://www.otodom.pl"
+    offer_url_template: "https://www.otodom.pl/pl/oferta/{slug}"
+    # Z URL-a oferty (…-mieszkanie-warszawa-ID4abcd) wyciągamy stabilne ID.
+    # Używane tylko wtedy, gdy w danych nie ma pola `id`.
+    offer_id_pattern: "-(ID[A-Za-z0-9]+)(?:\\.html)?/?$"
+    # Paginacja przez parametr w URL-u (pewniejsza niż klikanie "następna strona").
+    pagination_param: "page"
+
+    # Otodom to aplikacja Next.js — komplet danych siedzi w <script id="__NEXT_DATA__">.
+    # To jest ścieżka podstawowa: stabilniejsza i dokładniejsza niż skrobanie DOM-u.
+    next_data:
+      enabled: true
+      script_id: "__NEXT_DATA__"
+      # Kandydaci na listę ofert w JSON-ie wyników. Sprawdzane po kolei;
+      # jeśli żaden nie pasuje, parser szuka listy rekurencyjnie po kształcie.
+      list_paths:
+        - "props.pageProps.data.searchAds.items"
+        - "props.pageProps.data.searchAdsRandomPromoted.items"
+        - "props.pageProps.searchAds.items"
+      # Kandydaci na obiekt oferty na stronie szczegółowej.
+      detail_paths:
+        - "props.pageProps.ad"
+        - "props.pageProps.data.ad"
+
+    # Fallback: używany, gdy __NEXT_DATA__ zniknie albo zmieni kształt.
+    # `data-cy` na Otodom bywa stabilniejsze niż klasy CSS.
+    selectors:
+      list_item: "[data-cy='listing-item']"
+      list_link: "a[data-cy='listing-item-link']"
+      list_title: "[data-cy='listing-item-title']"
+      list_price: "[data-sentry-element='MainPrice'], [data-cy='listing-item-price']"
+      list_location: "[data-sentry-element='StyledParagraph'], p[data-cy='listing-item-location']"
+      list_area: "[data-sentry-element='SpecsItem'] span"
+      # Selektory list_* poniżej działają WEWNĄTRZ elementu `list_item`.
+      list_image: "img"
+      # Baner cookies (klikamy zgodę, to nie jest zabezpieczenie anty-botowe).
+      cookie_accept: "#onetrust-accept-btn-handler, [data-cy='accept-all-cookies-button'], button#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"
+      # Strona oferty:
+      detail_title: "[data-cy='adPageAdTitle'], h1"
+      detail_price: "[data-cy='adPageHeaderPrice'], [aria-label='Cena']"
+      detail_location: "[data-sentry-component='MapLink'], a[href='#map']"
+      detail_description: "[data-cy='adPageAdDescription'], [data-sentry-component='AdDescriptionBase']"
+      detail_gallery_image: "[data-sentry-element='Image'], picture img, [data-cy='adPageGallery'] img"
+      # Opcjonalny klik otwierający pełną galerię (gdy zdjęcia doczytują się leniwie).
+      gallery_open: "[data-cy='adPageGallery'] button, button[aria-label*='Zobacz zdjęcia']"
+      next_page: "[data-cy='pagination.next-page']"
+
+    # Otodom serwuje zdjęcia z CDN-u z rozmiarem w URL-u (`;s=SZERxWYS`).
+    # Te reguły podmieniają miniaturę na pełną rozdzielczość.
+    image_url_rules:
+      - pattern: ";s=\\d+x\\d+(;q=\\d+)?"
+        replacement: ";s=1280x1024"
+    # Klucze w JSON-ie obrazków, od najlepszej jakości.
+    image_keys: ["large", "big", "medium", "url", "small", "thumbnail"]
+
+  # -------------------------------------------------------------------------
+  # Szkielet pod inny portal — uzupełnij selektory i ustaw `portal: morizon`.
+  # Morizon/Gratka nie mają __NEXT_DATA__ w tym kształcie, więc next_data:
+  # enabled: false i cała robota idzie przez selektory CSS.
+  # -------------------------------------------------------------------------
+  morizon:
+    name: "Morizon"
+    base_url: "https://www.morizon.pl"
+    offer_url_template: "https://www.morizon.pl/oferta/{slug}"
+    offer_id_pattern: "mzn(\\d+)"
+    pagination_param: "page"
+    next_data:
+      enabled: false
+      script_id: "__NEXT_DATA__"
+      list_paths: []
+      detail_paths: []
+    selectors:
+      list_item: "TODO"
+      list_link: "TODO"
+      list_title: "TODO"
+      list_price: "TODO"
+      list_location: "TODO"
+      list_area: "TODO"
+      list_image: "TODO"
+      cookie_accept: "TODO"
+      detail_title: "TODO"
+      detail_price: "TODO"
+      detail_location: "TODO"
+      detail_description: "TODO"
+      detail_gallery_image: "TODO"
+      gallery_open: ""
+      next_page: "TODO"
+    image_url_rules: []
+    image_keys: ["large", "url"]
+
+# =============================================================================
+# Wykrywanie blokad anty-botowych.
+# Narzędzie ich NIE omija — po wykryciu przerywa przebieg z kodem wyjścia 2.
+# =============================================================================
+blocking:
+  markers:
+    - "captcha"
+    - "recaptcha"
+    - "hcaptcha"
+    - "px-captcha"
+    - "datadome"
+    - "cf-challenge"
+    - "cf-browser-verification"
+    - "just a moment"
+    - "attention required"
+    - "checking your browser"
+    - "access denied"
+    - "zweryfikuj, że nie jesteś robotem"
+    - "potwierdź, że nie jesteś robotem"
+  http_statuses: [403, 429, 503]

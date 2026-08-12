@@ -1,11 +1,12 @@
 # CLAUDE.md — pamięć projektu
 
-To repo zawiera CZTERY byty + jedno samodzielne narzędzie pomocnicze:
+To repo zawiera CZTERY byty + dwa samodzielne narzędzia pomocnicze:
 1. **InvoiceGuard** — istniejący SaaS (Next.js 15 + React 19 + TypeScript + Prisma + Postgres). Audyt faktur B2B / odzysk kosztów.
 2. **autobiznes** — autonomiczny system biznesowy zbudowany w `.claude/`, uruchamiany komendą `/autobiznes`.
 3. **autoodpowiedzi** — asystent automatycznego reagowania na e-mail/WhatsApp zbudowany w `.claude/`, uruchamiany komendą `/autoodpowiedzi`.
 4. **autoc** — auto-wznawianie sesji Claude Code zatrzymanych przez limit + kategoryzacja konwersacji wg projektu, uruchamiane komendą `/autoc` i cyklem co 5h.
 5. **/szukajfilmy** — samodzielna komenda wyszukiwania metadanych (tytuł/opis/link) na YouTube i Instagramie. Nie jest częścią żadnego z powyższych systemów. Szczegóły niżej.
+6. **otodom-monitor/** — samodzielne narzędzie w Pythonie (Playwright + SQLite) do monitorowania ofert nieruchomości. Nie jest komendą Claude'a i nie jest wpięte w żaden pipeline — uruchamiane z terminala/crona. Szczegóły niżej.
 
 ---
 
@@ -180,6 +181,38 @@ percepcji audio/wideo z tej sesji.
   wymagałoby własnego konta biznesowego + aplikacji Meta for Developers —
   eskalacja do `HUMAN_ACTION_REQUIRED.md`, nie coś do zrobienia automatycznie.
 - Samodzielna komenda — nie jest wpięta w żaden z 4 bytów/pipeline'ów powyżej.
+
+---
+
+## otodom-monitor — monitor ofert nieruchomości (Python, poza Claude'em)
+
+Katalog `otodom-monitor/`. Cyklicznie sprawdza wyniki wyszukiwania na Otodom.pl,
+trzyma stan w SQLite i raportuje różnice (nowe oferty, obniżki, zniknięcia).
+Pełna dokumentacja: `otodom-monitor/README.md`.
+
+- **Uruchomienie**: `python main.py --scrape | --watch | --report | --stats`,
+  cyklicznie przez crona (przykładowy wpis w README). Kod wyjścia 2 = blokada.
+- **Architektura**: `main.py` (CLI) → `scraper.py` (Playwright, headless Chromium,
+  rate limiting, detekcja blokad) → `parsers.py` (surowe dane → `Offer`, bez
+  zależności od przeglądarki) → `db.py` (schemat + diff) → `report.py`
+  (markdown + webhook). `models.py`, `config.py`, `images.py` pomocniczo.
+- **Dwutorowe wyciąganie danych**: podstawowo JSON z `__NEXT_DATA__` (Otodom to
+  Next.js), awaryjnie selektory CSS. Gdy skonfigurowane ścieżki przestaną pasować,
+  parser szuka listy ofert po kształcie danych.
+- **Cała wiedza o portalu w `config.yaml`** (sekcja `portals`) — przeniesienie na
+  Morizon/Gratkę to edycja YAML-a, nie kodu. Szkielet profilu `morizon` gotowy.
+- **Testy**: `python selftest.py` — 47 testów parserów, diffa i raportu, bez sieci
+  i bez przeglądarki.
+
+### Zasady twarde
+- **Nie omijamy zabezpieczeń anty-botowych.** Captcha/Cloudflare/HTTP 403-429 →
+  przerwanie przebiegu, czytelny komunikat, kod wyjścia 2. Żadnego rozwiązywania
+  captcha, podmiany fingerprintu ani rotacji proxy.
+- `min_delay_seconds` poniżej 1 s jest odrzucane przez walidację configu.
+- Oferta jest oznaczana jako usunięta dopiero po 2 przebiegach nieobecności, a
+  wykrywanie usunięć jest wyłączane, gdy przebieg nie objął całego zbioru wyników.
+- Dane lokalne (`data/`, `images/`, `reports/`, `debug/`) są gitignorowane —
+  pobrane opisy i zdjęcia to cudze utwory, nie trafiają do repo.
 
 ---
 

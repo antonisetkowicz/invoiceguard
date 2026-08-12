@@ -1,0 +1,14 @@
+# Dane lokalne — nie trafiają do repo
+data/
+images/
+reports/
+debug/
+*.db
+*.db-wal
+*.db-shm
+
+# Środowisko
+.venv/
+venv/
+__pycache__/
+*.pyc

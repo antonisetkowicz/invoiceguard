@@ -1,0 +1,9 @@
+# Sterowanie przeglądarką — Otodom renderuje wyniki JavaScriptem,
+# więc requests + BeautifulSoup nie wystarczą.
+playwright>=1.44,<2.0
+
+# Konfiguracja (config.yaml).
+PyYAML>=6.0,<7.0
+
+# Reszta (sqlite3, urllib, argparse, dataclasses) jest w bibliotece standardowej.
+# Wymagany Python >= 3.10.
