@@ -6,7 +6,7 @@ To repo zawiera CZTERY byty + dwa samodzielne narzędzia pomocnicze:
 3. **autoodpowiedzi** — asystent automatycznego reagowania na e-mail/WhatsApp zbudowany w `.claude/`, uruchamiany komendą `/autoodpowiedzi`.
 4. **autoc** — auto-wznawianie sesji Claude Code zatrzymanych przez limit + kategoryzacja konwersacji wg projektu, uruchamiane komendą `/autoc` i cyklem co 5h.
 5. **/szukajfilmy** — samodzielna komenda wyszukiwania metadanych (tytuł/opis/link) na YouTube i Instagramie. Nie jest częścią żadnego z powyższych systemów. Szczegóły niżej.
-6. **otodom-monitor/** — samodzielne narzędzie w Pythonie (Playwright + SQLite) do monitorowania ofert nieruchomości. Nie jest komendą Claude'a i nie jest wpięte w żaden pipeline — uruchamiane z terminala/crona. Szczegóły niżej.
+6. **otodomai/** — samodzielne narzędzie w Pythonie (Playwright + SQLite) do monitorowania ofert nieruchomości. Nie jest komendą Claude'a i nie jest wpięte w żaden pipeline — uruchamiane z terminala/crona. Szczegóły niżej.
 
 ---
 
@@ -184,11 +184,11 @@ percepcji audio/wideo z tej sesji.
 
 ---
 
-## otodom-monitor — monitor ofert nieruchomości (Python, poza Claude'em)
+## otodomai — monitor ofert nieruchomości (Python, poza Claude'em)
 
-Katalog `otodom-monitor/`. Cyklicznie sprawdza wyniki wyszukiwania na Otodom.pl,
+Katalog `otodomai/`. Cyklicznie sprawdza wyniki wyszukiwania na Otodom.pl,
 trzyma stan w SQLite i raportuje różnice (nowe oferty, obniżki, zniknięcia).
-Pełna dokumentacja: `otodom-monitor/README.md`.
+Pełna dokumentacja: `otodomai/README.md`.
 
 - **Uruchomienie**: `python main.py --scrape | --watch | --report | --stats`,
   cyklicznie przez crona (przykładowy wpis w README). Kod wyjścia 2 = blokada.

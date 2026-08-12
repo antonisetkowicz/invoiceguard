@@ -40,7 +40,7 @@ Otodom renderuje wyniki JavaScriptem, więc pod spodem chodzi **Playwright
 Wymagany Python **3.10+**.
 
 ```bash
-cd otodom-monitor
+cd otodomai
 
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
@@ -128,7 +128,7 @@ crontab -e
 ```
 
 ```cron
-0 7-22/3 * * * cd /ŚCIEŻKA/DO/otodom-monitor && .venv/bin/python main.py --watch >> logs/cron.log 2>&1
+0 7-22/3 * * * cd /ŚCIEŻKA/DO/otodomai && .venv/bin/python main.py --watch >> logs/cron.log 2>&1
 ```
 
 Uwagi:
@@ -141,7 +141,7 @@ Uwagi:
 Powiadomienie na telefon po wykryciu blokady (kod 2):
 
 ```cron
-0 7-22/3 * * * cd /ŚCIEŻKA/DO/otodom-monitor && .venv/bin/python main.py --watch >> logs/cron.log 2>&1 || echo "monitor: kod $? — sprawdź logs/cron.log" | mail -s "Monitor ofert" ty@example.com
+0 7-22/3 * * * cd /ŚCIEŻKA/DO/otodomai && .venv/bin/python main.py --watch >> logs/cron.log 2>&1 || echo "monitor: kod $? — sprawdź logs/cron.log" | mail -s "Monitor ofert" ty@example.com
 ```
 
 Na macOS zamiast crona możesz użyć `launchd` — plist analogiczny do tego
@@ -155,7 +155,7 @@ w `reports/latest.md`.
 ## Struktura
 
 ```
-otodom-monitor/
+otodomai/
 ├── main.py          # CLI: --scrape / --watch / --report / --stats / --debug-dump
 ├── scraper.py       # Playwright: nawigacja, rate limiting, wykrywanie blokad
 ├── parsers.py       # surowe dane -> Offer (bez zależności od przeglądarki)
