@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * selftest.mjs — test detektorów limitu i kategoryzacji na syntetycznych transkryptach.
- * Uruchomienie: node scripts/sessions/selftest.mjs
+ * Uruchomienie: node scripts/autoc/selftest.mjs
  * Nie dotyka prawdziwych sesji — pracuje w katalogu tymczasowym.
  */
 
@@ -19,7 +19,7 @@ const ok = (cond, msg) => {
   if (!cond) failed++;
 };
 
-const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'wznow-test-'));
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'autoc-test-'));
 const projDir = path.join(tmp, 'projects', '-tmp-projekt-alfa');
 fs.mkdirSync(projDir, { recursive: true });
 

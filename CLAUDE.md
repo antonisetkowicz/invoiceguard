@@ -4,7 +4,7 @@ To repo zawiera CZTERY byty:
 1. **InvoiceGuard** — istniejący SaaS (Next.js 15 + React 19 + TypeScript + Prisma + Postgres). Audyt faktur B2B / odzysk kosztów.
 2. **autobiznes** — autonomiczny system biznesowy zbudowany w `.claude/`, uruchamiany komendą `/autobiznes`.
 3. **autoodpowiedzi** — asystent automatycznego reagowania na e-mail/WhatsApp zbudowany w `.claude/`, uruchamiany komendą `/autoodpowiedzi`.
-4. **wznow** — auto-wznawianie sesji Claude Code zatrzymanych przez limit + kategoryzacja konwersacji wg projektu, uruchamiane komendą `/wznow` i cyklem co 5h.
+4. **autoc** — auto-wznawianie sesji Claude Code zatrzymanych przez limit + kategoryzacja konwersacji wg projektu, uruchamiane komendą `/autoc` i cyklem co 5h.
 
 ---
 
@@ -97,29 +97,29 @@ tylko dla whitelisty + `sensitivity: low`. Szczegóły w
 
 ---
 
-## wznow — jak to działa
+## autoc — jak to działa
 
 System, który **co 5 godzin** sprawdza, które sesje Claude Code zatrzymał limit,
 **wznawia je po odnowieniu limitu** i **kategoryzuje konwersacje wg projektu**.
-Pełna dokumentacja: `README.wznow.md`.
+Pełna dokumentacja: `README.autoc.md`.
 
 ### Uruchomienie
-- `/wznow` — pełny przebieg (skan + wznowienia + raport).
-- `/wznow --dry-run` — plan bez wznawiania. `/wznow --kategorie` — sam raport projektów.
-- Bez Claude'a: `node scripts/sessions/scan.mjs`, `node scripts/sessions/resume.mjs --apply`,
-  `node scripts/sessions/selftest.mjs` (testy detektorów limitu).
+- `/autoc` — pełny przebieg (skan + wznowienia + raport).
+- `/autoc --dry-run` — plan bez wznawiania. `/autoc --kategorie` — sam raport projektów.
+- Bez Claude'a: `node scripts/autoc/scan.mjs`, `node scripts/autoc/resume.mjs --apply`,
+  `node scripts/autoc/selftest.mjs` (testy detektorów limitu).
 
 ### Architektura
-- **Orkiestrator**: `.claude/commands/wznow.md` → 2 subagenty: `session-scanner`
+- **Orkiestrator**: `.claude/commands/autoc.md` → 2 subagenty: `session-scanner`
   (inwentarz sesji lokalnych + zdalnych, tylko odczyt) → `session-resumer`
   (wznowienia, budziki, eskalacje).
-- **Silnik**: `scripts/sessions/` — `lib.mjs` (parser transkryptów
+- **Silnik**: `scripts/autoc/` — `lib.mjs` (parser transkryptów
   `~/.claude/projects/**/*.jsonl`, detektory limitu, grupowanie wg projektu),
   `scan.mjs`, `resume.mjs`, `selftest.mjs`. Czysty Node, zero zależności.
-- **Polityka**: `.claude/wznow.config.json` (commitowany, bez sekretów) —
+- **Polityka**: `.claude/autoc.config.json` (commitowany, bez sekretów) —
   `auto_resume_local`, `auto_resume_remote`, `max_attempts`, `cooldown_min`,
   `max_age_days`, `max_per_run`, `exclude`, `resume_prompt`. Zmienne
-  `AUTORESUME_*` z `.env` nadpisują te wartości.
+  `AUTOC_*` z `.env` nadpisują te wartości.
 - **Reguły kategoryzacji**: `.claude/session-rules.json` — edytowane WYŁĄCZNIE
   ręcznie; wygrywa pierwsza pasująca reguła (wąskie kategorie wyżej niż `feature`).
 - **Stan**: `.claude/session-state/` (gitignorowany — zawiera fragmenty promptów):
@@ -127,21 +127,21 @@ Pełna dokumentacja: `README.wznow.md`.
   `resume-log.json` (append-only rejestr prób).
 
 ### Instalacja globalna (dostępność w KAŻDEJ konwersacji)
-`node scripts/sessions/install-global.mjs` (jednorazowo, na komputerze użytkownika):
-kopiuje komendę do `~/.claude/commands/wznow.md`, subagentów do `~/.claude/agents/`,
-silnik do `~/.claude/wznow/` (z przepisaniem ścieżek na globalne), zakłada
-harmonogram co 5h (launchd `com.wznow.cykl5h` na macOS, cron na Linuksie) i
+`node scripts/autoc/install-global.mjs` (jednorazowo, na komputerze użytkownika):
+kopiuje komendę do `~/.claude/commands/autoc.md`, subagentów do `~/.claude/agents/`,
+silnik do `~/.claude/autoc/` (z przepisaniem ścieżek na globalne), zakłada
+harmonogram co 5h (launchd `com.autoc.cykl5h` na macOS, cron na Linuksie) i
 zostawia stan w `~/.claude/session-state/`. Konfiguracji użytkownika NIGDY nie
-nadpisuje. Deinstalacja: `node ~/.claude/wznow/install-global.mjs --uninstall`.
-Skrypty same wykrywają kontekst (repo vs `~/.claude/`), można wymusić `WZNOW_HOME`.
+nadpisuje. Deinstalacja: `node ~/.claude/autoc/install-global.mjs --uninstall`.
+Skrypty same wykrywają kontekst (repo vs `~/.claude/`), można wymusić `AUTOC_HOME`.
 
 ### Harmonogram
-- **Chmura**: Routine `wznow-cykl-5h` (`0 */5 * * *`) budzi **sesję dyżurną**
-  („Dyżur /wznow", tag `wznow-dyzur`), która ma konektory MCP i robi cały
+- **Chmura**: Routine `autoc-cykl-5h` (`0 */5 * * *`) budzi **sesję dyżurną**
+  („Dyżur /autoc", tag `autoc-dyzur`), która ma konektory MCP i robi cały
   pipeline. Świeża sesja per odpalenie NIE zadziała — Routine w tej organizacji
   nie dostają konektorów MCP, więc nie zobaczyłyby listy sesji.
 - **Lokalnie (macOS)**: cron co 5h na `scan.mjs` + `resume.mjs --apply` — wpis
-  gotowy w `README.wznow.md`. Chmura nie widzi sesji lokalnych i odwrotnie.
+  gotowy w `README.autoc.md`. Chmura nie widzi sesji lokalnych i odwrotnie.
 
 ### Zasady twarde
 - Wznawiamy TYLKO limity odnawialne same z siebie (`five_hour`, `rate`). Limit
@@ -151,8 +151,8 @@ Skrypty same wykrywają kontekst (repo vs `~/.claude/`), można wymusić `WZNOW_
 - Bezpieczniki przed pętlą: `max_attempts` 3, `cooldown_min` 60, `max_per_run` 5,
   `max_age_days` 7. `resume.mjs` bez `--apply` niczego nie uruchamia.
 - Prompt wznawiający pochodzi z configu i zabrania rozszerzania zakresu prac.
-- Nie kasujemy cudzych Routine — tylko własne `wznow-resume-*` / `wznow-wake-*`,
-  nigdy `wznow-cykl-5h`.
+- Nie kasujemy cudzych Routine — tylko własne `autoc-resume-*` / `autoc-wake-*`,
+  nigdy `autoc-cykl-5h`.
 
 ---
 

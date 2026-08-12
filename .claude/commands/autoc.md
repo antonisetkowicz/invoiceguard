@@ -1,9 +1,9 @@
 ---
-description: Sprawdza, które sesje Claude Code (lokalne i zdalne) zatrzymał limit, wznawia je automatycznie po odnowieniu limitu i kategoryzuje wszystkie konwersacje wg projektu. Uruchamiany ręcznie albo co 5h przez Routine „wznow-cykl-5h”.
+description: Sprawdza, które sesje Claude Code (lokalne i zdalne) zatrzymał limit, wznawia je automatycznie po odnowieniu limitu i kategoryzuje wszystkie konwersacje wg projektu. Uruchamiany ręcznie albo co 5h przez Routine „autoc-cykl-5h”.
 argument-hint: '[--dry-run | --tylko-lokalne | --tylko-zdalne | --kategorie]'
 ---
 
-# /wznow — orkiestrator auto-wznowienia sesji
+# /autoc — orkiestrator auto-wznowienia sesji
 
 Jesteś ORKIESTRATOREM. Nie robisz pracy subagentów sam — wywołujesz ich
 sekwencyjnie przez tool `Task`/`Agent` i pilnujesz kontraktu plikowego.
@@ -21,7 +21,7 @@ Argument użytkownika: `$ARGUMENTS`
 1. `mkdir -p .claude/session-state`.
 2. Ustal `TS` = bieżący czas ISO.
 3. Zapamiętaj stan `HUMAN_ACTION_REQUIRED.md` (istnieje? rozmiar?) sprzed runu.
-4. Odczytaj politykę z `.claude/wznow.config.json`. Tryb = `dry-run`, jeśli
+4. Odczytaj politykę z `.claude/autoc.config.json`. Tryb = `dry-run`, jeśli
    podano `--dry-run`; inaczej `apply`.
 
 ## Kroki 1→2 — subagenci
@@ -29,7 +29,7 @@ Argument użytkownika: `$ARGUMENTS`
 | # | subagent | wejście | produkuje | pomiń gdy |
 |---|---|---|---|---|
 | 1 | `session-scanner` | `~/.claude/projects/`, MCP `list_sessions` | `sessions.json`, `projects.json`, `SESSIONS.md`, `remote-sessions.json` | nigdy |
-| 2 | `session-resumer` | `sessions.json`, `wznow.config.json` | `resume-actions.json`, `resume-report.json`, wpisy w `resume-log.json` | `--dry-run` (uruchom go w trybie dry-run) lub `--kategorie` (pomiń całkiem) |
+| 2 | `session-resumer` | `sessions.json`, `autoc.config.json` | `resume-actions.json`, `resume-report.json`, wpisy w `resume-log.json` | `--dry-run` (uruchom go w trybie dry-run) lub `--kategorie` (pomiń całkiem) |
 
 Przekaż każdemu subagentowi: `STATE_DIR`, tryb (`apply`/`dry-run`) i zakres
 (`lokalne`/`zdalne`/`oba`).
@@ -49,7 +49,7 @@ Wczytaj `STATE_DIR/projects.json` i przygotuj do raportu tabelę:
 Kategorie tematyczne biorą się z `.claude/session-rules.json` (plik
 użytkownika, edytowalny ręcznie — kolejność reguł ma znaczenie, wygrywa
 pierwsza pasująca). Jeśli plik nie istnieje, działają reguły domyślne z
-`scripts/sessions/lib.mjs`.
+`scripts/autoc/lib.mjs`.
 
 Jeśli któryś projekt ma > 30% sesji w kategorii `inne`/`nieokreślona` —
 zaproponuj użytkownikowi konkretną nową regułę do `session-rules.json`
@@ -63,7 +63,7 @@ wyślij jedno zwięzłe powiadomienie:
 
 ```bash
 curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
-  -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode text="/wznow: wznowiono N sesji, M czeka na reset, K wymaga Ciebie"
+  -d chat_id="$TELEGRAM_CHAT_ID" --data-urlencode text="/autoc: wznowiono N sesji, M czeka na reset, K wymaga Ciebie"
 ```
 
 Cisza, gdy nic się nie zmieniło — cykl co 5h nie ma prawa spamować.
@@ -86,7 +86,7 @@ Wypisz użytkownikowi w czacie, po polsku:
 6. **Ścieżki plików**: `.claude/session-state/SESSIONS.md`, `sessions.json`,
    `projects.json`, `resume-actions.json`, `resume-log.json`.
 7. **Następny cykl**: kiedy wypada najbliższe uruchomienie Routine
-   `wznow-cykl-5h` (co 5h) — sprawdź `next_run_at` przez `list_triggers`
+   `autoc-cykl-5h` (co 5h) — sprawdź `next_run_at` przez `list_triggers`
    (narzędzie bywa nazwane `mcp__Claude_Code_Remote__list_triggers` albo
    `mcp__claude-code-remote__list_triggers`). Jeśli tego Routine NIE MA,
    powiedz o tym wyraźnie i podaj gotowe wywołanie `create_trigger` z
@@ -98,9 +98,9 @@ Wypisz użytkownikowi w czacie, po polsku:
 - Sesja przerwana przez człowieka (Esc, zamknięcie) NIE jest wznawiana.
 - Maksymalnie `max_attempts` prób na sesję i `max_per_run` sesji na cykl —
   reszta czeka. Nigdy nie obchodź rejestru `resume-log.json`.
-- Sekrety tylko z `.env`; polityka z `.claude/wznow.config.json`.
-- Nigdy nie kasuj cudzych Routine — tylko własne `wznow-resume-*` /
-  `wznow-wake-*`, i nigdy `wznow-cykl-5h`.
+- Sekrety tylko z `.env`; polityka z `.claude/autoc.config.json`.
+- Nigdy nie kasuj cudzych Routine — tylko własne `autoc-resume-*` /
+  `autoc-wake-*`, i nigdy `autoc-cykl-5h`.
 - Ten pipeline nie zmienia kodu w repo użytkownika. Jedyne pliki, które
   zapisuje, to `.claude/session-state/*` i (gdy trzeba)
   `HUMAN_ACTION_REQUIRED.md`.

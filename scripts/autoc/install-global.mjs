@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 /**
- * install-global.mjs — instaluje /wznow GLOBALNIE na tym komputerze.
+ * install-global.mjs — instaluje /autoc GLOBALNIE na tym komputerze.
  *
  * Po instalacji:
- *   - komenda `/wznow` działa w KAŻDEJ konwersacji Claude Code (dowolny projekt),
+ *   - komenda `/autoc` działa w KAŻDEJ konwersacji Claude Code (dowolny projekt),
  *     bo ląduje w `~/.claude/commands/` razem z subagentami w `~/.claude/agents/`,
  *   - cykl co 5h chodzi w tle niezależnie od jakiejkolwiek otwartej sesji
  *     (launchd na macOS, cron na Linuksie),
- *   - stan i konfiguracja siedzą w `~/.claude/` (`wznow.config.json`,
+ *   - stan i konfiguracja siedzą w `~/.claude/` (`autoc.config.json`,
  *     `session-rules.json`, `session-state/`).
  *
  * Użycie:
- *   node scripts/sessions/install-global.mjs             # instalacja + harmonogram
- *   node scripts/sessions/install-global.mjs --no-cron   # bez harmonogramu
- *   node scripts/sessions/install-global.mjs --dry-run   # pokaż, co by zrobił
- *   node scripts/sessions/install-global.mjs --uninstall # odinstaluj
+ *   node scripts/autoc/install-global.mjs             # instalacja + harmonogram
+ *   node scripts/autoc/install-global.mjs --no-cron   # bez harmonogramu
+ *   node scripts/autoc/install-global.mjs --dry-run   # pokaż, co by zrobił
+ *   node scripts/autoc/install-global.mjs --uninstall # odinstaluj
  */
 
 import fs from 'node:fs';
@@ -27,13 +27,13 @@ const SRC_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SRC_DIR, '..', '..');
 const HOME = os.homedir();
 const CLAUDE_DIR = path.join(HOME, '.claude');
-const DEST_DIR = path.join(CLAUDE_DIR, 'wznow');
+const DEST_DIR = path.join(CLAUDE_DIR, 'autoc');
 const COMMANDS_DIR = path.join(CLAUDE_DIR, 'commands');
 const AGENTS_DIR = path.join(CLAUDE_DIR, 'agents');
 const RUNNER = path.join(DEST_DIR, 'run-cycle.sh');
-const PLIST_LABEL = 'com.wznow.cykl5h';
+const PLIST_LABEL = 'com.autoc.cykl5h';
 const PLIST_PATH = path.join(HOME, 'Library', 'LaunchAgents', `${PLIST_LABEL}.plist`);
-const CRON_MARK = '# wznow-cykl-5h (auto-wznawianie sesji Claude Code)';
+const CRON_MARK = '# autoc-cykl-5h (auto-wznawianie sesji Claude Code)';
 
 const argv = process.argv.slice(2);
 const has = (f) => argv.includes(f);
@@ -62,19 +62,19 @@ const rm = (file) => {
 // Przepisywanie ścieżek repo → ścieżki globalne
 // ---------------------------------------------------------------------------
 
-const GLOBAL_HEADER = '<!-- WERSJA GLOBALNA — wygenerowana przez scripts/sessions/install-global.mjs.\n'
+const GLOBAL_HEADER = '<!-- WERSJA GLOBALNA — wygenerowana przez scripts/autoc/install-global.mjs.\n'
   + '     Nie edytuj tego pliku ręcznie: zmieniaj oryginał w repo i uruchom instalator ponownie. -->\n\n';
 
 /**
  * Zamienia ścieżki repo-zależne na globalne:
- *   scripts/sessions/X.mjs → ~/.claude/wznow/X.mjs
+ *   scripts/autoc/X.mjs → ~/.claude/autoc/X.mjs
  *   .claude/cokolwiek      → ~/.claude/cokolwiek
  * Lookbehind pilnuje, żeby nie ruszać ścieżek już poprawnych (`~/.claude/…`).
  */
 function globalize(text) {
   return text
-    .replace(/node scripts\/sessions\//g, 'node ~/.claude/wznow/')
-    .replace(/scripts\/sessions\//g, '~/.claude/wznow/')
+    .replace(/node scripts\/autoc\//g, 'node ~/.claude/autoc/')
+    .replace(/scripts\/autoc\//g, '~/.claude/autoc/')
     .replace(/(?<![~\w/.])\.claude\//g, '~/.claude/');
 }
 
@@ -83,10 +83,10 @@ function globalize(text) {
 // ---------------------------------------------------------------------------
 
 const RUNNER_SH = `#!/bin/sh
-# Cykl /wznow — uruchamiany co 5h przez launchd (macOS) albo cron (Linux).
+# Cykl /autoc — uruchamiany co 5h przez launchd (macOS) albo cron (Linux).
 # Skan wszystkich sesji + wznowienie tych, którym limit już się odnowił.
 set -u
-DIR="$HOME/.claude/wznow"
+DIR="$HOME/.claude/autoc"
 LOG="$DIR/cykl.log"
 
 # rotacja logu przy 512 KB, żeby nie rósł w nieskończoność
@@ -94,7 +94,7 @@ if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 524288 ]; then
   mv "$LOG" "$LOG.1"
 fi
 
-NODE_BIN="\${WZNOW_NODE:-$(command -v node || echo /usr/local/bin/node)}"
+NODE_BIN="\${AUTOC_NODE:-$(command -v node || echo /usr/local/bin/node)}"
 
 {
   echo "=== cykl $(date -u +%Y-%m-%dT%H:%M:%SZ) ==="
@@ -175,13 +175,13 @@ function uninstallScheduler() {
 // ---------------------------------------------------------------------------
 
 if (has('--uninstall')) {
-  console.log('Odinstalowuję globalny /wznow…');
+  console.log('Odinstalowuję globalny /autoc…');
   uninstallScheduler();
-  rm(path.join(COMMANDS_DIR, 'wznow.md'));
+  rm(path.join(COMMANDS_DIR, 'autoc.md'));
   rm(path.join(AGENTS_DIR, 'session-scanner.md'));
   rm(path.join(AGENTS_DIR, 'session-resumer.md'));
   rm(DEST_DIR);
-  console.log('\nGotowe. Zostawiłem `~/.claude/wznow.config.json`, `~/.claude/session-rules.json` '
+  console.log('\nGotowe. Zostawiłem `~/.claude/autoc.config.json`, `~/.claude/session-rules.json` '
     + 'i `~/.claude/session-state/` — usuń ręcznie, jeśli chcesz wyczyścić też ustawienia i historię.');
   process.exit(0);
 }
@@ -190,15 +190,50 @@ if (has('--uninstall')) {
 // Instalacja
 // ---------------------------------------------------------------------------
 
-console.log(`Instaluję globalny /wznow (${DRY ? 'DRY-RUN' : 'na serio'})…\n`);
+console.log(`Instaluję globalny /autoc (${DRY ? 'DRY-RUN' : 'na serio'})…\n`);
 
-// 0. instalator musi widzieć źródła w repo (kopia w ~/.claude/wznow/ służy tylko
+// 0a. migracja z poprzedniej nazwy systemu (wznow → autoc)
+const LEGACY = {
+  dir: path.join(CLAUDE_DIR, 'wznow'),
+  command: path.join(COMMANDS_DIR, 'wznow.md'),
+  config: path.join(CLAUDE_DIR, 'wznow.config.json'),
+  plistLabel: 'com.wznow.cykl5h',
+  plist: path.join(HOME, 'Library', 'LaunchAgents', 'com.wznow.cykl5h.plist'),
+  cronMark: '# wznow-cykl-5h (auto-wznawianie sesji Claude Code)',
+};
+
+// ustawienia ze starej instalacji przenosimy, żeby nie przepadły
+if (fs.existsSync(LEGACY.config) && !fs.existsSync(path.join(CLAUDE_DIR, 'autoc.config.json'))) {
+  write(path.join(CLAUDE_DIR, 'autoc.config.json'), fs.readFileSync(LEGACY.config, 'utf8'));
+  note('przeniesiono ustawienia z wznow.config.json → autoc.config.json');
+}
+if (fs.existsSync(LEGACY.dir) || fs.existsSync(LEGACY.command)) {
+  note('wykryto starą instalację pod nazwą „wznow" — sprzątam ją');
+  if (isMac && fs.existsSync(LEGACY.plist) && !DRY) {
+    const uid = process.getuid ? process.getuid() : 0;
+    spawnSync('launchctl', ['bootout', `gui/${uid}/${LEGACY.plistLabel}`], { encoding: 'utf8' });
+    spawnSync('launchctl', ['unload', LEGACY.plist], { encoding: 'utf8' });
+  }
+  rm(LEGACY.plist);
+  rm(LEGACY.command);
+  rm(LEGACY.dir);
+  const cur = spawnSync('crontab', ['-l'], { encoding: 'utf8' });
+  if (!isMac && cur.status === 0 && cur.stdout.includes(LEGACY.cronMark) && !DRY) {
+    const cleaned = cur.stdout.split('\n')
+      .filter((l, i, arr) => !l.includes(LEGACY.cronMark) && !(arr[i - 1] || '').includes(LEGACY.cronMark))
+      .join('\n');
+    spawnSync('crontab', ['-'], { input: `${cleaned.replace(/\s*$/, '\n')}`, encoding: 'utf8' });
+    note('usunięto stary wpis crona (wznow)');
+  }
+}
+
+// 0. instalator musi widzieć źródła w repo (kopia w ~/.claude/autoc/ służy tylko
 //    do odinstalowania — nie ma obok siebie plików komendy i agentów)
-const commandSrc = path.join(REPO_ROOT, '.claude', 'commands', 'wznow.md');
+const commandSrc = path.join(REPO_ROOT, '.claude', 'commands', 'autoc.md');
 if (!fs.existsSync(commandSrc)) {
   console.error(`Nie znajduję ${commandSrc}.\n`
-    + 'Instalację uruchamiaj z checkoutu repo: node scripts/sessions/install-global.mjs\n'
-    + '(kopia w ~/.claude/wznow/ obsługuje tylko --uninstall).');
+    + 'Instalację uruchamiaj z checkoutu repo: node scripts/autoc/install-global.mjs\n'
+    + '(kopia w ~/.claude/autoc/ obsługuje tylko --uninstall).');
   process.exit(2);
 }
 
@@ -209,7 +244,7 @@ for (const f of ['lib.mjs', 'scan.mjs', 'resume.mjs', 'selftest.mjs', 'install-g
 
 // 2. komenda i subagenci — z przepisanymi ścieżkami
 write(
-  path.join(COMMANDS_DIR, 'wznow.md'),
+  path.join(COMMANDS_DIR, 'autoc.md'),
   globalize(fs.readFileSync(commandSrc, 'utf8')) + '\n' + GLOBAL_HEADER,
 );
 for (const agent of ['session-scanner.md', 'session-resumer.md']) {
@@ -220,7 +255,7 @@ for (const agent of ['session-scanner.md', 'session-resumer.md']) {
 }
 
 // 3. konfiguracja — NIGDY nie nadpisujemy istniejącej (to ustawienia użytkownika)
-for (const f of ['wznow.config.json', 'session-rules.json']) {
+for (const f of ['autoc.config.json', 'session-rules.json']) {
   const dest = path.join(CLAUDE_DIR, f);
   if (fs.existsSync(dest)) note(`${dest} już istnieje — zostawiam Twoją wersję`);
   else write(dest, fs.readFileSync(path.join(REPO_ROOT, '.claude', f), 'utf8'));
@@ -246,14 +281,14 @@ if (!DRY) {
 console.log(`\nGotowe (${done.length} kroków).
 
 Co masz teraz:
-  • /wznow           — działa w KAŻDEJ konwersacji Claude Code na tym komputerze
+  • /autoc           — działa w KAŻDEJ konwersacji Claude Code na tym komputerze
   • cykl co 5h       — ${has('--no-cron') ? 'NIE zainstalowany (--no-cron)' : isMac ? `launchd ${PLIST_LABEL}` : 'cron (co 5h)'}, chodzi niezależnie od otwartych sesji
-  • ustawienia       — ~/.claude/wznow.config.json, ~/.claude/session-rules.json
+  • ustawienia       — ~/.claude/autoc.config.json, ~/.claude/session-rules.json
   • stan i raporty   — ~/.claude/session-state/ (SESSIONS.md, sessions.json, projects.json)
-  • log cyklu        — ~/.claude/wznow/cykl.log
+  • log cyklu        — ~/.claude/autoc/cykl.log
 
 Sprawdzenie, że harmonogram żyje:
-  ${isMac ? `launchctl list | grep ${PLIST_LABEL}` : 'crontab -l | grep wznow'}
-  tail -20 ~/.claude/wznow/cykl.log
+  ${isMac ? `launchctl list | grep ${PLIST_LABEL}` : 'crontab -l | grep autoc'}
+  tail -20 ~/.claude/autoc/cykl.log
 
-Odinstalowanie:  node ~/.claude/wznow/install-global.mjs --uninstall`);
+Odinstalowanie:  node ~/.claude/autoc/install-global.mjs --uninstall`);

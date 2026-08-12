@@ -1,11 +1,11 @@
 {
-  "//": "Polityka systemu /wznow (bez sekretów — te są w .env). Zmienne środowiskowe AUTORESUME_* nadpisują te wartości.",
+  "//": "Polityka systemu /autoc (bez sekretów — te są w .env). Zmienne środowiskowe AUTOC_* nadpisują te wartości.",
 
   "auto_resume_local": true,
   "//auto_resume_local": "true = skrypt resume.mjs --apply naprawdę uruchamia `claude --resume` dla sesji lokalnych. false = tylko plan (dry-run).",
 
   "auto_resume_remote": true,
-  "//auto_resume_remote": "true = komenda /wznow sama budzi zablokowane sesje zdalne (claude.ai/code) przez Routine one-shot. false = tylko raportuje.",
+  "//auto_resume_remote": "true = komenda /autoc sama budzi zablokowane sesje zdalne (claude.ai/code) przez Routine one-shot. false = tylko raportuje.",
 
   "max_attempts": 3,
   "//max_attempts": "Ile razy wolno próbować wznowić TĘ SAMĄ sesję, zanim system przestanie (chroni przed pętlą wznawiania).",
@@ -25,5 +25,5 @@
   "exclude": [],
   "//exclude": "Fragmenty ścieżek katalogów roboczych, których NIGDY nie wznawiamy, np. [\"/Users/ja/eksperymenty\"].",
 
-  "resume_prompt": "[auto-wznowienie /wznow] Limit się odnowił. Kontynuuj dokładnie od miejsca, w którym przerwałeś. Najpierw jednym zdaniem streść, na czym stanąłeś, potem dokończ zadanie. Jeśli zadanie było już skończone — napisz to i nic nie zmieniaj. Nie zaczynaj nowego zakresu prac na własną rękę."
+  "resume_prompt": "[auto-wznowienie /autoc] Limit się odnowił. Kontynuuj dokładnie od miejsca, w którym przerwałeś. Najpierw jednym zdaniem streść, na czym stanąłeś, potem dokończ zadanie. Jeśli zadanie było już skończone — napisz to i nic nie zmieniaj. Nie zaczynaj nowego zakresu prac na własną rękę."
 }

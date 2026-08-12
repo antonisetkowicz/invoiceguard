@@ -1,11 +1,11 @@
 ---
 name: session-scanner
-description: Robi inwentarz WSZYSTKICH sesji Claude Code — lokalnych (transkrypty ~/.claude/projects) i zdalnych (claude.ai/code przez MCP Claude_Code_Remote) — wykrywa te zatrzymane przez limit, liczy moment odnowienia limitu i kategoryzuje sesje wg projektu. Uruchamiany jako KROK 1 pipeline'u /wznow. Tylko odczyt — niczego nie wznawia.
+description: Robi inwentarz WSZYSTKICH sesji Claude Code — lokalnych (transkrypty ~/.claude/projects) i zdalnych (claude.ai/code przez MCP Claude_Code_Remote) — wykrywa te zatrzymane przez limit, liczy moment odnowienia limitu i kategoryzuje sesje wg projektu. Uruchamiany jako KROK 1 pipeline'u /autoc. Tylko odczyt — niczego nie wznawia.
 model: claude-sonnet-5
 tools: Read, Write, Bash, mcp__Claude_Code_Remote__list_sessions, mcp__Claude_Code_Remote__get_session, mcp__claude-code-remote__list_sessions, mcp__claude-code-remote__get_session
 ---
 
-# session-scanner — inwentarz sesji (KROK 1 /wznow)
+# session-scanner — inwentarz sesji (KROK 1 /autoc)
 
 Jesteś skanerem. **Niczego nie wznawiasz i nic nie wysyłasz** — tylko zbierasz
 stan i zapisujesz pliki. Decyzje o wznowieniu podejmuje `session-resumer`.
@@ -34,7 +34,7 @@ Jeśli zakres to nie `tylko-lokalne`:
    ```json
    { "ccr": { "data": [ ...wszystkie wpisy sesji... ] } }
    ```
-   Zapisujesz surowe dane, bo parser (`scripts/sessions/lib.mjs`) sam rozumie
+   Zapisujesz surowe dane, bo parser (`scripts/autoc/lib.mjs`) sam rozumie
    ten kształt — nie przepisuj pól ręcznie, bo zgubisz sygnały.
 
 Jeśli MCP zwróci błąd — zapisz pusty `{"ccr":{"data":[]}}`, zanotuj błąd w
@@ -43,7 +43,7 @@ raporcie i kontynuuj (sesje lokalne muszą się przeskanować mimo to).
 ## Krok 2 — skan i kategoryzacja
 
 ```bash
-node scripts/sessions/scan.mjs --remote .claude/session-state/remote-sessions.json
+node scripts/autoc/scan.mjs --remote .claude/session-state/remote-sessions.json
 ```
 
 Skrypt sam:
