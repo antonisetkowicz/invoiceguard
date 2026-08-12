@@ -6,15 +6,4 @@ node_modules/
 out/
 dist/
 .claude-flow/
-
-# autobiznes — artefakty runów i plik akcji człowieka (efemeryczne)
-/run/*
-!/run/.gitkeep
-/HUMAN_ACTION_REQUIRED.md
 .claude/settings.local.json
-
-# autoodpowiedzi — historia wiadomości (może zawierać treści prywatne, nie commitujemy)
-/message_log.json
-
-# /autoc — stan skanu sesji (zawiera fragmenty promptów, dane prywatne)
-/.claude/session-state/
