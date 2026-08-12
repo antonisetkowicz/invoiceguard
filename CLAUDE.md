@@ -7,7 +7,7 @@ To repo zawiera CZTERY byty + trzy samodzielne narzędzia pomocnicze:
 4. **autoc** — auto-wznawianie sesji Claude Code zatrzymanych przez limit + kategoryzacja konwersacji wg projektu, uruchamiane komendą `/autoc` i cyklem co 5h.
 5. **/szukajfilmy** — samodzielna komenda wyszukiwania metadanych (tytuł/opis/link) na YouTube i Instagramie. Nie jest częścią żadnego z powyższych systemów. Szczegóły niżej.
 6. **/repos-setup** — samodzielna komenda grupowo dodająca repozytoria GitHub do zakresu bieżącej sesji na starcie (zamiast pytań o zgodę rozrzuconych w trakcie pracy). Szczegóły niżej.
-7. **/gemini** — samodzielna komenda jednorazowych zapytań do Google Gemini API (`generateContent`). Nie jest częścią żadnego z powyższych systemów. Szczegóły niżej.
+7. **/api** — samodzielna komenda jednorazowych zapytań do zewnętrznych LLM API (Google Gemini lub xAI Grok). Nie jest częścią żadnego z powyższych systemów. Szczegóły niżej.
 
 ---
 
@@ -206,26 +206,32 @@ nowa sesja odpala ją od nowa, nic nie jest zapisywane trwale.
 
 ---
 
-## /gemini — jednorazowe zapytanie do Google Gemini API
+## /api — jednorazowe zapytanie do zewnętrznego LLM API (Gemini / xAI)
 
-`.claude/commands/gemini.md`, uruchamiane `/gemini prompt: <tekst>,
-model: <opcjonalnie, domyślnie gemini-2.5-flash>`. Wysyła pojedynczy prompt
-do Gemini (`generateContent`) i zwraca odpowiedź w czacie — jednorazowe
-wywołanie zewnętrznego API, NIE przełącznik domyślnego modelu tej sesji.
+`.claude/commands/api.md`, uruchamiane `/api provider: gemini|xai,
+prompt: <tekst>, model: <opcjonalnie>`. Wysyła pojedynczy prompt do
+wskazanego zewnętrznego dostawcy (Google Gemini `generateContent` albo
+xAI Grok, API zgodne z formatem OpenAI chat completions) i zwraca
+odpowiedź w czacie — jednorazowe wywołanie zewnętrznego API, NIE
+przełącznik domyślnego modelu tej sesji.
 
-**Klucz wyłącznie z `.env` (`GEMINI_API_KEY`), nigdy hardkodowany.** Zgodnie
-z twardą zasadą tego repo („Sekrety WYŁĄCZNIE przez `.env`... Nigdy nie
-hardkoduj") komenda nie zawiera i nigdy nie ma zawierać realnej wartości
-klucza — czyta go ze zmiennej środowiskowej w locie. Platforma sesji
-dodatkowo sama blokuje odczyt/zapis plików `.env*` z poziomu narzędzi, co
-wzmacnia tę regułę technicznie, nie tylko konwencją. Jeśli `GEMINI_API_KEY`
-nie jest ustawiony, komenda **nie prosi o wklejenie klucza na czacie**
-(trafiłby do logów/transkryptu) — instruuje krótko, żeby dodać go do
-lokalnego `.env`, i się zatrzymuje. Klucz do Gemini API zdobywa się w Google
-AI Studio (aistudio.google.com/apikey); darmowy tier z limitami zapytań/min
-istnieje dla większości modeli.
+**Klucze wyłącznie z `.env`, nigdy hardkodowane.** Każdy dostawca ma
+własną zmienną: `GEMINI_API_KEY` (Google AI Studio,
+aistudio.google.com/apikey) i `XAI_API_KEY` (xAI Console, console.x.ai).
+Zgodnie z twardą zasadą tego repo („Sekrety WYŁĄCZNIE przez `.env`...
+Nigdy nie hardkoduj") komenda nie zawiera i nigdy nie ma zawierać
+realnej wartości żadnego klucza — czyta go ze zmiennej środowiskowej w
+locie. Platforma sesji dodatkowo sama blokuje odczyt/zapis plików
+`.env*` z poziomu narzędzi, co wzmacnia tę regułę technicznie, nie
+tylko konwencją. Jeśli zmienna dla wybranego `provider` nie jest
+ustawiona, komenda **nie prosi o wklejenie klucza na czacie** (trafiłby
+do logów/transkryptu) — instruuje krótko, żeby dodać go do lokalnego
+`.env`, i się zatrzymuje.
 
 Samodzielna komenda — nie jest wpięta w żaden z 4 bytów/pipeline'ów powyżej.
+(Wcześniej istniała jako `/gemini`, obsługująca tylko Google Gemini —
+skonsolidowana w `/api` po dodaniu obsługi xAI, żeby nie utrzymywać dwóch
+niemal identycznych komend.)
 
 ---
 
